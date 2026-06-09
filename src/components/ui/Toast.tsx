@@ -1,40 +1,74 @@
-
-
-// Defining the types for the toast component
-
-
-
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import type { ToastProps } from '../../toastDefinitions';
-import { ToastType } from '../../toastDefinitions';
+
+const iconMap = {
+	success: { icon: CheckCircle, color: 'var(--color-on-surface-success)', bg: 'var(--color-input-tint-success-bg)' },
+	error: { icon: XCircle, color: 'var(--color-on-surface-error)', bg: 'var(--color-input-tint-error-bg)' },
+	warning: { icon: AlertTriangle, color: 'var(--color-on-surface-warning)', bg: 'var(--color-input-tint-warning-bg)' },
+	info: { icon: Info, color: 'var(--color-on-surface-info)', bg: 'var(--color-input-tint-info-bg)' },
+};
+
 const Toast: React.FC<ToastProps> = ({ id, type, message, onClose }) => {
-  const baseClasses = 'max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden';
-  const typeClasses = {
-    [ToastType.SUCCESS]: 'bg-green-50 text-green-800',
-    [ToastType.ERROR]: 'bg-red-50 text-red-800',
-    [ToastType.INFO]: 'bg-blue-50 text-blue-800',
-    [ToastType.WARNING]: 'bg-yellow-50 text-yellow-800',
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const toastIcon = iconMap[type] || iconMap.info;
+  const IconComponent = toastIcon.icon;
+
+  useEffect(() => {
+    requestAnimationFrame(() => setIsVisible(true));
+  }, []);
+
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => onClose(id), 200);
   };
 
+  useEffect(() => {
+    const timer = setTimeout(handleClose, 4000);
+    return () => clearTimeout(timer);
+  }, [id]);
+
   return (
-    <div className={`${baseClasses} ${typeClasses[type]}`}>
-      <div className="p-4">
-        <div className="flex items-start">
-          <div className="ml-3 w-0 flex-1 pt-0.5">
-            <p className="text-sm font-medium">{message}</p>
+    <div
+      className={`
+        pointer-events-auto transition-all duration-300 ease-out
+        ${isVisible && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isExiting ? 'translate-x-8 opacity-0' : ''}
+      `}
+      style={{
+        maxWidth: '420px',
+        width: '100%',
+      }}
+      role="alert"
+      aria-live="assertive"
+    >
+      <div
+        className="glass-card overflow-hidden"
+        style={{
+			borderLeft: `3px solid ${toastIcon.color}`,
+			boxShadow: 'var(--shadow-md)',
+        }}
+      >
+        <div className="flex items-start gap-3 p-4">
+          <div
+            className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: toastIcon.bg }}
+          >
+            <IconComponent className="w-4 h-4" style={{ color: toastIcon.color }} />
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
-            <button
-              onClick={() => onClose(id)}
-              className="inline-flex text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-sm font-medium text-[var(--text-primary)] leading-relaxed">
+              {message}
+            </p>
           </div>
+          <button
+            onClick={handleClose}
+            className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+            aria-label="Cerrar notificación"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </div>

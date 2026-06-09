@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { sessionCache } from '../utils/sessionCache';
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+import { API_BASE_URL, debugLog, debugError } from '../utils/config';
 
 interface BackendStatus {
   isActive: boolean;
@@ -48,12 +47,12 @@ export const useBackendSync = (enableBackendSync = true) => {
           error: null,
           isLoading: false
         });
-        console.log('✅ useBackendSync: Backend activo y sincronizado');
+        debugLog('✅ useBackendSync: Backend activo y sincronizado');
       } else {
         throw new Error(`Error HTTP ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ useBackendSync: Error de backend:', error);
+      debugError('❌ useBackendSync: Error de backend:', error);
       setBackendStatus({
         isActive: false,
         lastSync: null,
@@ -81,12 +80,12 @@ export const useBackendSync = (enableBackendSync = true) => {
     const now = Date.now();
 
     if (lastSync && (now - lastSync) < 10 * 60 * 1000) {
-      console.log('⏭️ useBackendSync: Sync reciente, omitiendo');
+      debugLog('⏭️ useBackendSync: Sync reciente, omitiendo');
       return;
     }
 
     try {
-      console.log('🔄 useBackendSync: Sincronizando sesión con backend...');
+      debugLog('🔄 useBackendSync: Sincronizando sesión con backend...');
 
       const response = await fetch(`${API_BASE_URL}/api/session/sync`, {
         method: 'POST',
@@ -100,13 +99,13 @@ export const useBackendSync = (enableBackendSync = true) => {
       });
 
       if (response.ok) {
-        console.log('✅ useBackendSync: Sincronización exitosa');
+        debugLog('✅ useBackendSync: Sincronización exitosa');
         sessionCache.set('last_session_sync', now, 10 * 60 * 1000);
       } else {
         throw new Error(`Error de sincronización: ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ useBackendSync: Error en sincronización:', error);
+      debugError('❌ useBackendSync: Error en sincronización:', error);
     }
   }, [shouldSync]);
 

@@ -2,7 +2,7 @@
  * ChartA11y - Accesibilidad avanzada para gráficos
  * ARIA live regions + descripciones dinámicas + modo alto contraste
  */
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 interface ChartA11yConfig {
   chartId: string;
@@ -21,25 +21,25 @@ interface A11yState {
 
 // Palette WCAG AAA para alto contraste
 const HIGH_CONTRAST_PALETTE = {
-  primary: '#000000',
-  secondary: 'var(--color-grey-800)',
-  success: '#006400',
-  danger: '#8B0000',
-  warning: '#8B7500',
-  background: 'var(--color-bg-secondary)',
-  text: '#000000',
-  border: '#000000'
+	primary: 'var(--color-high-contrast-text)',
+	secondary: 'var(--color-grey-300)',
+	success: 'var(--color-success-400)',
+	danger: 'var(--color-error-400)',
+	warning: 'var(--color-warning-400)',
+	background: 'var(--color-high-contrast-bg)',
+	text: 'var(--color-high-contrast-text)',
+	border: 'var(--color-high-contrast-border)'
 };
 
 const NORMAL_PALETTE = {
-  primary: '#2563EB',
-  secondary: '#059669',
-  success: '#10B981',
-  danger: '#DC2626',
-  warning: '#F59E0B',
-  background: '#F1F5F9',
-  text: '#0F172A',
-  border: '#64748B'
+  primary: 'var(--color-primary)',
+  secondary: 'var(--color-secondary)',
+  success: 'var(--color-success)',
+  danger: 'var(--color-danger)',
+  warning: 'var(--color-warning)',
+  background: 'var(--bg-secondary)',
+  text: 'var(--text-primary)',
+  border: 'var(--border-primary)'
 };
 
 const FONT_SIZE_MULTIPLIERS = {
@@ -61,6 +61,7 @@ export function useChartAccessibility(config: ChartA11yConfig) {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const prefersHighContrast = window.matchMedia('(prefers-contrast: more)').matches;
     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setA11yState({
       reduceMotion: prefersReducedMotion,
       isHighContrast: prefersHighContrast,
@@ -144,7 +145,7 @@ export const ChartA11yPanel: React.FC<ChartA11yPanelProps> = ({
         aria-expanded={isExpanded}
         aria-controls={`${chartId}-a11y-panel`}
       >
-        <span className="font-medium text-[var(--text-primary)]">
+        <span className="text-sm font-medium text-[var(--text-primary)]">
           Accesibilidad del Gráfico
         </span>
         <svg 
@@ -180,7 +181,7 @@ export const ChartA11yPanel: React.FC<ChartA11yPanelProps> = ({
                 onClick={() => onHighContrastChange?.(true)}
                 className="relative inline-flex h-6 w-11 items-center rounded-full bg-[var(--border-primary)]"
               >
-                <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+                <span className="inline-block h-4 w-4 transform rounded-full bg-[var(--surface-elevated)] border border-[var(--border-primary)] shadow-sm translate-x-1" />
               </button>
             </label>
 

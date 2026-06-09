@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useId } from 'react';
 import { ModuleType } from '../../enums';
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
@@ -23,13 +23,14 @@ export const Select: React.FC<SelectProps> = ({
   children,
   ...props
 }) => {
-  const selectId = useMemo(() => id || `select-${Math.random().toString(36).substr(2, 9)}`, [id]);
+  const reactId = useId();
+  const selectId = id || reactId;
 
   const baseClasses = 'select focus-visible';
   const moduleClass = module ? `input-module module-${module}` : '';
   const sizeClass = size !== 'md' ? `input-${size}` : '';
   const variantClass = variant !== 'default' ? `input-${variant}` : '';
-  const errorClass = error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '';
+  const errorClass = error ? 'border-[var(--color-error-500)]' : '';
 
   const classes = [
     baseClasses,
@@ -45,7 +46,7 @@ export const Select: React.FC<SelectProps> = ({
       {label && (
         <label htmlFor={selectId} className="form-label mb-2 block">
           {label}
-          {props.required && <span className="text-red-500 ml-1">*</span>}
+          {props.required && <span className="text-[var(--color-error-500)] ml-1">*</span>}
         </label>
       )}
 
@@ -59,9 +60,8 @@ export const Select: React.FC<SelectProps> = ({
           {children}
         </select>
 
-        {/* Custom arrow */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[var(--text-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>

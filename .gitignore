@@ -50,6 +50,14 @@ test_*.py
 *.tmp
 *.temp
 .cache/
+*.generated.json
+reporte_*.xlsx
+debug_*.xlsx
+!public/assets/*.xlsx
+
+# Excel/PDF local output
+reporte_*.xlsx
+comparador_*.html
 
 # VS folder
 .vs/

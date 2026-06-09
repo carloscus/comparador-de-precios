@@ -1,9 +1,5 @@
-/**
- * PricePieChart - Gráfico circular interactivo mejorado
- * Con accesibilidad, tooltips enriquecidos y sincronización
- */
 import React, { useState, useCallback, useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface PricePieChartProps {
   data: Array<{
@@ -21,30 +17,56 @@ interface PricePieChartProps {
   onHover?: (data: { name: string; value: number } | null) => void;
 }
 
-// Colores WCAG AAA usando variables CSS
+const PieLabel = ({ name, percent }: { name?: string; percent?: number }) => {
+  const isSmallScreen = typeof window !== 'undefined' && window.innerWidth < 640;
+  const fontSize = isSmallScreen ? '12px' : '14px';
+  
+  return (
+    <text
+      style={{
+        fontSize,
+        fontWeight: 600,
+        fill: 'var(--text-primary)',
+        pointerEvents: 'none',
+        textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+        paintOrder: 'stroke'
+      }}
+      stroke="var(--surface-primary)"
+      strokeWidth="0.5"
+    >
+      {name || ''}: {((percent ?? 0) * 100).toFixed(0)}%
+    </text>
+  );
+};
+
+const CustomLegend = ({ payload }: { payload?: Array<{ color: string; value: string }> }) => {
+  if (!payload || payload.length === 0) return null;
+
+  return (
+    <div className="mt-3 px-2">
+      <ul className="flex flex-wrap justify-center gap-x-3 gap-y-2">
+        {payload.map((entry, index) => (
+          <li key={`legend-${index}`} className="flex items-center gap-2 text-sm sm:text-base">
+            <span className="w-3 h-3 rounded-full border border-[var(--border-primary)] flex-shrink-0" style={{ backgroundColor: entry.color }} />
+            <span className="text-[var(--text-secondary)] font-medium">{entry.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const getColors = () => [
-  getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563EB',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || '#059669',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#7C3AED',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-danger').trim() || '#DC2626',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-warning').trim() || '#F59E0B',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-success').trim() || '#10B981',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-error').trim() || '#EF4444',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#8B5CF6'
+  getComputedStyle(document.documentElement).getPropertyValue('--color-primary-500').trim() || '#00a86b',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-500').trim() || '#4f46e5',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-warning-500').trim() || '#d97706',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-error-500').trim() || '#dc2626',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-success-500').trim() || '#16a34a',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-info-500').trim() || '#2563eb',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-error-400').trim() || '#f87171',
+  getComputedStyle(document.documentElement).getPropertyValue('--color-warning-400').trim() || '#fbbf24',
 ];
 
-const getHoverColors = () => [
-  getComputedStyle(document.documentElement).getPropertyValue('--color-primary-700').trim() || '#1E40AF',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-700').trim() || '#047857',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-accent-700').trim() || '#6D28D9',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-danger-700').trim() || '#B91C1C',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-warning-700').trim() || '#D97706',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-success-700').trim() || '#059669',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-error-700').trim() || '#DC2626',
-  getComputedStyle(document.documentElement).getPropertyValue('--color-accent-700').trim() || '#7C3AED'
-];
-
-// Tooltip personalizado enriquecido
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
@@ -59,26 +81,26 @@ interface CustomTooltipProps {
   }>;
 }
 
-const CustomTooltip: React.FC<CustomTooltipProps> = ({ 
-  active, 
+const CustomTooltip: React.FC<CustomTooltipProps> = ({
+  active,
   payload
 }) => {
   if (active && payload && payload.length) {
     const data = payload[0];
-    const total = payload.reduce((sum, item) => sum + item.value, 0);
+    const total = payload.reduce((sum: number, item: { value: number }) => sum + item.value, 0);
     const percent = total > 0 ? ((data.value / total) * 100).toFixed(2) : '0';
-    
+
     return (
-      <div 
-        className="glass p-4 rounded-lg border border-[var(--border-primary)] shadow-lg"
+      <div
+        className="glass p-3 rounded-lg border border-[var(--border-primary)] shadow-lg min-w-[140px] sm:min-w-[160px] max-w-[calc(100vw-32px)]"
         role="tooltip"
         aria-live="polite"
       >
-        <p className="font-bold text-[var(--text-primary)]">{data.name}</p>
-        <p className="text-[var(--color-comparador-primary)] font-bold text-lg">
+        <p className="font-bold text-sm sm:text-base text-[var(--text-primary)] mb-1">{data.name}</p>
+        <p className="text-[var(--color-on-surface-primary)] font-mono font-bold text-base sm:text-lg">
           S/ {data.value.toFixed(2)}
         </p>
-        <p className="text-[var(--text-secondary)] text-sm">
+        <p className="text-[var(--text-secondary)] text-xs sm:text-sm">
           {percent}% del total
         </p>
         {data.payload.details && (
@@ -109,20 +131,16 @@ const PricePieChart: React.FC<PricePieChartProps> = ({
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
 
-  // Calcular total y porcentajes
   const total = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
-  
-  // Datos con porcentajes calculados
-  const chartData = useMemo(() => 
+
+  const chartData = useMemo(() =>
     data.map((item, index) => ({
       ...item,
       percent: total > 0 ? (item.value / total) : 0,
       color: item.color || getColors()[index % getColors().length],
-      hoverColor: getHoverColors()[index % getHoverColors().length]
     })), [data, total]
   );
 
-  // Manejar click en segmento
   type SegmentEntry = { name: string; value: number; percent?: number };
 
   const handleSegmentClick = useCallback((entry: SegmentEntry) => {
@@ -130,7 +148,6 @@ const PricePieChart: React.FC<PricePieChartProps> = ({
     onSegmentClick?.({ name: entry.name, value: entry.value });
   }, [onSegmentClick]);
 
-  // Manejar hover
   const handleMouseEnter = useCallback((entry: SegmentEntry) => {
     setHoveredSegment(entry.name);
     onHover?.({ name: entry.name, value: entry.value });
@@ -141,7 +158,6 @@ const PricePieChart: React.FC<PricePieChartProps> = ({
     onHover?.(null);
   }, [onHover]);
 
-  // Generar descripción accesible
   const accessibleDescription = useMemo(() => {
     const segments = chartData
       .map(item => `${item.name}: S/ ${item.value.toFixed(2)} (${(item.percent * 100).toFixed(2)}%)`)
@@ -151,14 +167,12 @@ const PricePieChart: React.FC<PricePieChartProps> = ({
 
   return (
     <div className="w-full" role="img" aria-label={ariaLabel || title || 'Gráfico circular de precios'}>
-      {title && <h3 className="text-lg font-semibold mb-2 text-[var(--text-primary)]">{title}</h3>}
-      
-      {/* Descripción accesible para lectores de pantalla */}
+      {title && <h3 className="text-base sm:text-lg font-semibold mb-3 text-[var(--text-primary)]">{title}</h3>}
+
       <div className="sr-only" aria-live="polite">
         {accessibleDescription}
       </div>
 
-      {/* Resumen textual alternativo */}
       <div className="sr-only" aria-label="Tabla de datos accesibles">
         <table>
           <caption>Datos del gráfico circular</caption>
@@ -188,51 +202,54 @@ const PricePieChart: React.FC<PricePieChartProps> = ({
         </table>
       </div>
 
-      <div className="h-64">
+      <div className="h-60 sm:h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }: { name?: string; percent?: number }) => 
-                `${name || ''}: ${((percent ?? 0) * 100).toFixed(0)}%`
-              }
-              outerRadius={80}
+              label={chartData.length > 1 ? PieLabel : false}
+              outerRadius={70}
+              innerRadius={20}
               dataKey="value"
               onClick={handleSegmentClick}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
-              role="graphics-symbol"
               style={{ cursor: onSegmentClick ? 'pointer' : 'default' }}
+              animationDuration={800}
+              animationEasing="ease-out"
             >
               {chartData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
+                <Cell
+                  key={`cell-${index}`}
                   fill={entry.color}
-                  stroke="var(--border-primary)"
-                  strokeWidth={1}
+                  stroke="var(--surface-primary)"
+                  strokeWidth={2}
                   style={{
-                    opacity: hoveredSegment && hoveredSegment !== entry.name ? 0.5 : 1,
-                    transition: 'opacity 0.2s ease, transform 0.2s ease',
-                    transform: hoveredSegment === entry.name ? 'scale(1.05)' : 'scale(1)'
+                    opacity: hoveredSegment && hoveredSegment !== entry.name ? 0.6 : 1,
+                    filter: hoveredSegment === entry.name ? 'brightness(1.1)' : 'none',
+                    transform: hoveredSegment === entry.name ? 'scale(1.03)' : 'scale(1)',
+                    transformOrigin: 'center',
                   }}
                 />
               ))}
             </Pie>
             {showTooltip && (
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={<CustomTooltip />}
+                wrapperStyle={{ fontSize: '12px', zIndex: 1000 }}
+              />
             )}
-            {showLegend && <Legend />}
+            {showLegend && <CustomLegend payload={chartData.map(d => ({ color: d.color, value: d.name }))} />}
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Indicador de segmento activo */}
       {activeSegment && (
-        <div 
-          className="mt-2 p-2 bg-[var(--color-success)]/10 rounded text-sm text-[var(--color-success)]"
+        <div
+          className="mt-2 p-2 bg-[var(--color-input-tint-success-bg)] rounded text-[13px] text-[var(--color-on-surface-success)]"
           role="status"
           aria-live="polite"
         >

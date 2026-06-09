@@ -20,7 +20,6 @@ export type Observaciones = string | null;
 export type Precios = {
   [k: string]: number;
 } | null;
-export type PrecioSugerido = number | null;
 export type List = ProductoEditado[];
 export type Nombre1 = string;
 export type Correo = string;
@@ -67,7 +66,6 @@ export interface ProductoEditado {
   cantidad: Cantidad;
   observaciones?: Observaciones;
   precios?: Precios;
-  precio_sugerido?: PrecioSugerido;
   [k: string]: unknown;
 }
 export interface Usuario {

@@ -1,13 +1,8 @@
 import { createContext, useContext } from 'react';
-import { ToastType } from '../toastDefinitions';
 import type { ToastTypeString } from '../toastDefinitions';
+import type { ToastProps } from '../toastDefinitions';
 
-export interface ToastProps {
-  id: string;
-  type: ToastType;
-  message: string;
-  onClose: (id: string) => void;
-}
+export type { ToastProps } from '../toastDefinitions';
 
 interface ToastContextType {
   addToast: (message: string, type?: ToastTypeString) => void;

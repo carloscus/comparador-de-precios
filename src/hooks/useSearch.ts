@@ -5,7 +5,7 @@
 //                                                                             #
 // MANTENIMIENTO:
 // - Este hook usa useMemo para optimización de rendimiento
-// - El orden de prioridad de búsqueda es: código > EAN > keywords > nombre
+// - El orden de prioridad de búsqueda es: código > ean_14 > keywords > nombre
 // - Si se necesita cambiar la prioridad, modificar el orden en el filter
 // - La búsqueda es case-insensitive
 //
@@ -48,8 +48,8 @@ export const useSearch = (items: IProducto[] = [], searchTerm: string): IProduct
         return true;
       }
 
-      // Prioridad 2: Coincidencia exacta con el `cod_ean` (código de barras).
-      if (item.cod_ean.toLowerCase() === lowercasedSearchTerm) {
+      // Prioridad 2: Coincidencia con el `ean_14` del producto.
+      if (item.ean_14 && item.ean_14.toLowerCase().includes(lowercasedSearchTerm)) {
         return true;
       }
 

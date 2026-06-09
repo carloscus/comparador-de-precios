@@ -65,20 +65,20 @@ export const Tooltip: React.FC<TooltipProps> = ({
             {isVisible && (
                 <div
                     className={`
-            absolute z-[1000] px-3 py-2 text-sm font-medium text-[var(--text-primary)]
-            bg-[var(--surface-elevated)] rounded-lg shadow-xl border border-[var(--border-primary)]
-            whitespace-nowrap pointer-events-none animate-in fade-in duration-200
-            ${positionClasses[position]}
-            ${className}
-          `}
+                        absolute z-[1000] px-3 py-2 text-sm font-medium text-[var(--text-primary)]
+                        bg-[var(--surface-elevated)] rounded-lg shadow-lg border border-[var(--border-primary)]
+                        whitespace-nowrap pointer-events-none animate-fade-in duration-200
+                        ${positionClasses[position]}
+                        ${className}
+                    `}
                     role="tooltip"
                 >
                     {content}
                     <div
                         className={`
-              absolute w-0 h-0 border-4 border-transparent
-              ${arrowClasses[position]}
-            `}
+                            absolute w-0 h-0 border-4 border-transparent
+                            ${arrowClasses[position]}
+                        `}
                     />
                 </div>
             )}

@@ -19,7 +19,7 @@ export function calculateDataWithPercentages(
 ): (IProductoEditado & Record<string, string | number | undefined>)[] {
   return lista.map(producto => {
     const precios = producto.precios || {};
-    const p1 = precios[competidores[0]] || 0;
+    const p1 = precios[competidores[0]] ?? 0;
     const porcentajes: { [key: string]: string | number | undefined } = {};
 
     // Identificar el mejor precio (el más bajo > 0)
@@ -27,7 +27,7 @@ export function calculateDataWithPercentages(
     let mejorCompetidor = '';
 
     competidores.forEach(comp => {
-      const precio = precios[comp] || 0;
+      const precio = precios[comp] ?? 0;
       if (precio > 0 && precio < mejorPrecio) {
         mejorPrecio = precio;
         mejorCompetidor = comp;
@@ -42,7 +42,7 @@ export function calculateDataWithPercentages(
       // Calcular porcentajes contra competidores
       for (let i = 1; i < competidores.length; i++) {
         const competidorActual = competidores[i];
-        const pi = precios[competidorActual] || 0;
+        const pi = precios[competidorActual] ?? 0;
         if (pi > 0) {
           // Fórmula: ((Base / Competidor) - 1) * 100
           const ratio = (p1 / pi) - 1;
@@ -57,24 +57,13 @@ export function calculateDataWithPercentages(
         }
       }
 
-      // Calcular % Ajuste a Sugerido
-      const precioSugerido = producto.precio_sugerido || 0;
-      if (precioSugerido > 0) {
-        // Fórmula: ((Sugerido / Base) - 1) * 100
-        const ratioSugerido = (precioSugerido / p1) - 1;
-        porcentajes['% Ajuste a Sugerido'] = `${(ratioSugerido * 100).toFixed(2)}%`;
-      } else {
-        porcentajes['% Ajuste a Sugerido'] = 'N/A';
-      }
-
-    } else {
-      // Si no hay precio base, todos los cálculos son N/A
-      for (let i = 1; i < competidores.length; i++) {
-        porcentajes[`% vs ${competidores[i]}`] = 'N/A';
-        porcentajes[`m${i + 1}_ratio`] = undefined;
-      }
-      porcentajes['% Ajuste a Sugerido'] = 'N/A';
+  } else {
+    // Si no hay precio base, todos los cálculos son N/A
+    for (let i = 1; i < competidores.length; i++) {
+      porcentajes[`% vs ${competidores[i]}`] = 'N/A';
+      porcentajes[`m${i + 1}_ratio`] = undefined;
     }
+  }
 
     // Calcular Precio Promedio - solo de los precios de competidores
     // IMPORTANTE: Solo incluir los precios de los competidores, no otros campos
@@ -99,7 +88,7 @@ export function calculateSummary(
   competidores: string[]
 ) {
   const pctHeaders = competidores.slice(1).map((comp) => `% vs ${comp}`);
-  pctHeaders.push('% Ajuste a Sugerido'); // Usar el nuevo encabezado de ajuste
+
   const valores: number[] = [];
 
   for (const row of dataWithPercentages) {

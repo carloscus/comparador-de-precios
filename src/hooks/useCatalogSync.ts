@@ -3,6 +3,7 @@ import { sessionCache } from '../utils/sessionCache';
 import { getCatalogFromIndexedDB, saveCatalogToIndexedDB, getCacheStats } from '../utils/indexedDb';
 import { useToasts } from './useToasts';
 import { useAppStore } from '../store/useAppStore';
+import { debugLog, debugWarn, debugError } from '../utils/config';
 
 export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActive: boolean }) => {
   const { addToast } = useToasts();
@@ -19,7 +20,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
     try {
       const cachedCatalog = await getCatalogFromIndexedDB();
       if (cachedCatalog && cachedCatalog.length > 0) {
-        console.log(`📦 useCatalogSync: Cargando ${cachedCatalog.length} productos desde cache local`);
+        debugLog(`📦 useCatalogSync: Cargando ${cachedCatalog.length} productos desde cache local`);
         // Actualizar el store directamente
         useAppStore.setState({ 
           catalogo: cachedCatalog, 
@@ -36,7 +37,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
         return true;
       }
     } catch (error) {
-      console.warn('⚠️ useCatalogSync: Error cargando desde cache:', error);
+      debugWarn('⚠️ useCatalogSync: Error cargando desde cache:', error);
     }
     return false;
   }, [addToast]);
@@ -44,13 +45,13 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
   const syncCatalogWithBackend = useCallback(async () => {
     if (!enableBackendSync || isUpdatingRef.current) return false;
     if (!backendStatus.isActive) {
-      console.log('⚠️ useCatalogSync: Backend no disponible, intentando cargar desde cache');
+      debugLog('⚠️ useCatalogSync: Backend no disponible, intentando cargar desde cache');
       return await loadFromCache();
     }
 
     try {
       isUpdatingRef.current = true;
-      console.log('🔄 useCatalogSync: Sincronizando catálogo con backend...');
+      debugLog('🔄 useCatalogSync: Sincronizando catálogo con backend...');
 
       // Obtener el estado actual antes de la carga
       const currentState = useAppStore.getState();
@@ -64,7 +65,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
       if (newState.catalogo.length > 0) {
         // Guardar en cache local para uso offline
         await saveCatalogToIndexedDB(newState.catalogo);
-        console.log('✅ useCatalogSync: Catálogo sincronizado y guardado en cache');
+        debugLog('✅ useCatalogSync: Catálogo sincronizado y guardado en cache');
         
         const updateTime = new Date();
         setLastCatalogUpdate(updateTime);
@@ -79,7 +80,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
       
       return false;
     } catch (error) {
-      console.error('❌ useCatalogSync: Error en sincronización de catálogo:', error);
+      debugError('❌ useCatalogSync: Error en sincronización de catálogo:', error);
       // Fallback a cache en caso de error
       return await loadFromCache();
     } finally {
@@ -109,7 +110,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
     const initializeCatalog = async () => {
       if (isInitialized) return;
       
-      console.log('🚀 useCatalogSync: Inicializando catálogo...');
+      debugLog('🚀 useCatalogSync: Inicializando catálogo...');
       
       // Primero intentar cargar desde cache para startup rápido
       const loadedFromCache = await loadFromCache();
@@ -145,7 +146,7 @@ export const useCatalogSync = (enableBackendSync = true, backendStatus: { isActi
       const needsUpdate = !stats.catalogSize || stats.catalogSize === 0;
       
       if (needsUpdate) {
-        console.log('🔄 useCatalogSync: Sincronización periódica - cache vacío o expirado');
+        debugLog('🔄 useCatalogSync: Sincronización periódica - cache vacío o expirado');
         const success = await syncCatalogWithBackend();
         if (success && stats.catalogSize) {
           showCatalogUpdateNotification();

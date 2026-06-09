@@ -376,12 +376,6 @@ Haga clic en los encabezados de columna para ordenar:
 - Ascendente (A-Z, 0-9)
 - Descendente (Z-A, 9-0)
 
-### 6.3 Búsqueda en Tabla
-
-Use el campo de búsqueda para filtrar productos en la tabla:
-- Busca por código o nombre
-- Actualiza automáticamente
-
 ### 6.4 Tema Claro/Oscuro
 
 **Cambiar tema:**

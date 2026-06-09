@@ -8,7 +8,9 @@
 import React, { useState, useCallback } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { Tooltip } from './ui';
-import { generateExcelWithExcelJS, downloadBlob, type ExcelProducto } from '../utils/excelJsGenerator';
+import { generateExcelWithExcelJS, type ExcelProducto } from '../utils/excelJsGenerator';
+import { downloadBlob } from '../utils/downloadBlob';
+import { debugLog, debugError } from '../utils/config';
 
 interface ExcelJSExportButtonProps {
   productos: ExcelProducto[];
@@ -49,15 +51,14 @@ export const ExcelJSExportButton: React.FC<ExcelJSExportButtonProps> = ({
         codigo_cliente,
         sucursal,
         responsable,
-        selectedColumns: [],
       });
 
       const filename = `comparador_${cliente?.toLowerCase().replace(/[^a-z0-9]/g, '_') || 'cliente'}_${new Date().toLocaleDateString('es-PE').replace(/\//g, '-')}.xlsx`;
       downloadBlob(blob, filename);
       
-      console.log('✅ Exportación con ExcelJS exitosa');
+      debugLog('✅ Exportación con ExcelJS exitosa');
     } catch (error) {
-      console.error('❌ Error con ExcelJS:', error);
+      debugError('❌ Error con ExcelJS:', error);
     } finally {
       setIsLoading(false);
     }

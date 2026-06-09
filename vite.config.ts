@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/comparador-de-precios/',
+  base: '/g360-price-audit/',
   build: {
     chunkSizeWarningLimit: 2048,
     outDir: 'dist',

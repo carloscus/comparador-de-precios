@@ -1,110 +1,95 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
+  error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary: Uncaught error:', error, errorInfo);
-    
-    // Call optional error handler
-    this.props.onError?.(error, errorInfo);
-    
-    // Report to external service if needed
-    if (import.meta.env.PROD) {
-      // Here you could send to error reporting service
-      console.log('Reporting error to external service...', error);
-    }
-  }
-
-  private handleRetry = () => {
-    this.setState({ hasError: false, error: undefined });
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
   };
 
-  private handleReload = () => {
-    window.location.reload();
-  };
-
-  public render() {
+  render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
       return (
-        <div className="min-h-screen bg-grey-50 dark:bg-grey-900 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white dark:bg-grey-800 rounded-lg shadow-xl p-6">
-            <div className="text-center mb-6">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-                <svg
-                  className="h-6 w-6 text-red-600 dark:text-red-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-xl font-semibold text-grey-900 dark:text-white mb-2">
-                ¡Oops! Algo salió mal
-              </h1>
-              <p className="text-grey-600 dark:text-grey-400">
-                Ha ocurrido un error inesperado. Puedes intentar recargar la página o volver al inicio.
-              </p>
-            </div>
-
-            {import.meta.env.DEV && this.state.error && (
-              <div className="mb-4 p-3 bg-grey-100 dark:bg-grey-700 rounded-md">
-                <p className="text-sm text-grey-800 dark:text-grey-200 font-mono">
-                  {this.state.error.message}
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={this.handleRetry}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Reintentar
-              </button>
-              <button
-                onClick={this.handleReload}
-                className="flex-1 px-4 py-2 bg-grey-600 text-white rounded-md hover:bg-grey-700 transition-colors"
-              >
-                Recargar Página
-              </button>
-            </div>
-
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Volver al inicio
-              </button>
-            </div>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: '2rem',
+          textAlign: 'center',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          background: 'var(--bg-primary, #0f172a)',
+          color: 'var(--text-primary, #f1f5f9)',
+        }}>
+          <div style={{
+            background: 'var(--surface-elevated, #1e293b)',
+            border: '1px solid var(--border-primary, rgba(148,163,184,0.3))',
+            borderRadius: '16px',
+            padding: '2.5rem',
+            maxWidth: '480px',
+            width: '100%',
+          }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary, #f1f5f9)' }}>
+              Error inesperado
+            </h2>
+            <p style={{ color: 'var(--text-secondary, #cbd5e1)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              Ocurrió un error en la aplicación. Por favor, intente recargar la página.
+            </p>
+            <details style={{ marginBottom: '1.5rem', textAlign: 'left', fontSize: '0.75rem' }}>
+              <summary style={{ cursor: 'pointer', color: 'var(--text-secondary, #cbd5e1)' }}>
+                Detalles del error
+              </summary>
+              <pre style={{
+                marginTop: '0.5rem',
+                padding: '0.75rem',
+                background: 'var(--bg-tertiary, #334155)',
+                borderRadius: '8px',
+                overflow: 'auto',
+                color: 'var(--color-danger, #f87171)',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}>
+                {this.state.error?.message}
+                {this.state.error?.stack}
+              </pre>
+            </details>
+            <button
+              onClick={this.handleReset}
+              style={{
+                background: 'var(--color-primary, #00a86b)',
+                color: 'var(--color-btn-primary-text, #ffffff)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.625rem 1.5rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+              }}
+            >
+              Reintentar
+            </button>
           </div>
         </div>
       );
@@ -113,15 +98,3 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-
-// Hook para usar ErrorBoundary fácilmente
-export const useErrorHandler = () => {
-  return (error: Error, errorInfo?: string) => {
-    console.error('Application error:', error, errorInfo);
-    
-    // Log to external service in production
-    if (import.meta.env.PROD) {
-      // Example: Sentry.captureException(error);
-    }
-  };
-};

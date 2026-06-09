@@ -9,6 +9,8 @@
  * - Zero API calls para operaciones básicas
  */
 
+import { debugError } from './config';
+
 interface CacheItem<T> {
   data: T;
   timestamp: number;
@@ -46,7 +48,7 @@ class SessionCache {
 
       return null;
     } catch (error) {
-      console.error('Cache read error:', error);
+      debugError('Cache read error:', error);
       return null;
     }
   }
@@ -68,7 +70,7 @@ class SessionCache {
       // localStorage (persistente)
       localStorage.setItem(`session_cache_${key}`, JSON.stringify(item));
     } catch (error) {
-      console.error('Cache write error:', error);
+      debugError('Cache write error:', error);
     }
   }
 

@@ -1,37 +1,6 @@
 
 import type { PedidoExport, InventarioExport, DevolucionesExport, PreciosExport } from '../api/schemas';
-import type { ICalcularApiParams, ICalcularApiResponse } from '../interfaces';
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
-
-
-export const calcularApi = async (params: ICalcularApiParams): Promise<ICalcularApiResponse> => {
-  const { montoTotal, fechasValidas } = params;
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/calculate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        montoTotal,
-        fechasValidas,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Error en el cálculo de la API');
-    }
-
-    const data: ICalcularApiResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error calling calcularApi:', error);
-    throw error;
-  }
-};
+import { API_BASE_URL } from './config';
 
 type ExportPayload = PedidoExport | InventarioExport | DevolucionesExport | PreciosExport;
 
@@ -49,8 +18,7 @@ export const exportApi = async (payload: ExportPayload, export_format: 'xlsx' | 
       let errorMessage = 'Error desconocido al exportar el archivo';
       try {
         const errorData = await response.json();
-        errorMessage = errorData.message || errorData.error || errorMessage;
-        console.error('Backend validation error details:', errorData);
+      errorMessage = errorData.message || errorData.error || errorMessage;
       } catch {
         errorMessage = await response.text();
       }
@@ -81,7 +49,6 @@ export const exportApi = async (payload: ExportPayload, export_format: 'xlsx' | 
     const blob = await response.blob();
     return { blob, filename };
   } catch (error) {
-    console.error(`Error calling exportApi with format ${export_format}:`, error);
     throw error;
   }
 };

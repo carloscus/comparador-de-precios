@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComparisonTableRow } from '../../pages/ComparadorPage';
+import type { ComparisonTableRow } from '../../interfaces';
 import { getBrandColor } from '../../utils/colorScheme';
 import { useCompetitiveAnalysis } from '../../hooks/useCompetitiveAnalysis';
 

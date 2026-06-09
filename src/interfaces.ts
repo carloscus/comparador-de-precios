@@ -24,9 +24,6 @@ export const ProductoSchema = z.object({
   /** Identificador único del producto. */
   codigo: z.string().min(1, 'El código es requerido.'),
 
-  /** Código de barras EAN del producto. */
-  cod_ean: z.string(),
-
   /** Código de barras EAN-14 del producto. */
   ean_14: z.string(),
 
@@ -68,8 +65,6 @@ export const ProductoEditadoSchema = ProductoSchema.extend({
   /** Un objeto para almacenar los precios de la competencia. */
   precios: z.record(z.string(), z.number()).optional(),
 
-  /** Precio sugerido para el producto. */
-  precio_sugerido: z.number().nonnegative('El precio sugerido no puede ser negativo.').optional(),
 
   /** Precio promedio de los competidores. */
   precio_promedio: z.number().nonnegative().optional(),
@@ -177,3 +172,5 @@ export interface ICalcularApiResponse {
 export interface BlobWithName extends Blob {
   name: string;
 }
+
+export type ComparisonTableRow = IProductoEditado & Record<string, unknown>;

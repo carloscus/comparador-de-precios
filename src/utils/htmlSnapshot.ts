@@ -4,6 +4,8 @@
  * sin necesidad de servidor ni conexión a internet.
  */
 
+import { debugLog, debugWarn } from './config';
+
 interface HTMLSnapshotOptions {
   /** Título del documento */
   title: string;
@@ -36,7 +38,7 @@ function extractAllStyles(): string {
       }
     } catch (e) {
       // Algunas hojas de estilo pueden estar bloqueadas por CORS
-      console.warn('No se pudo acceder a una hoja de estilo:', e);
+      debugWarn('No se pudo acceder a una hoja de estilo:', e);
     }
   }
   
@@ -200,7 +202,7 @@ function createHTMLDocument(
     body {
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Outfit', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
@@ -217,7 +219,7 @@ function createHTMLDocument(
     .snapshot-header {
       position: sticky;
       top: 0;
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      background: linear-gradient(135deg, #006540 0%, #00a86b 100%);
       color: white;
       padding: 1rem;
       display: flex;
@@ -270,19 +272,19 @@ function createHTMLDocument(
     
     /* Dark mode para snapshot */
     .dark .snapshot-header {
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      background: linear-gradient(135deg, #00432a 0%, #006540 100%);
     }
     
-    .dark .snapshot-footer {
-      border-top-color: #334155;
-      color: #94a3b8;
-    }
+     .dark .snapshot-footer {
+       border-top-color: #475569;
+       color: #cbd5e1;
+     }
   </style>
 </head>
 <body>
   <!-- Header del snapshot -->
   <header class="snapshot-header no-print">
-    <h1>📊 ${title}</h1>
+    <h1 class="text-2xl font-extrabold">📊 ${title}</h1>
     <div class="snapshot-actions">
       <button class="snapshot-btn" onclick="toggleTheme()" title="Cambiar tema">
         🌓 Tema
@@ -339,7 +341,7 @@ export async function generateHTMLSnapshot(
   element: HTMLElement,
   options: HTMLSnapshotOptions
 ): Promise<void> {
-  console.log('🚀 Generando snapshot HTML...');
+  debugLog('🚀 Generando snapshot HTML...');
   
   const { title, cliente, fecha } = options;
   
@@ -360,22 +362,22 @@ export async function generateHTMLSnapshot(
       img.style.height = canvas.style.height || 'auto';
       canvas.replaceWith(img);
     } catch (e) {
-      console.warn('No se pudo convertir un canvas a imagen:', e);
-    }
-  }
-  
-  // Generar el documento HTML
-  const htmlContent = createHTMLDocument(clone.innerHTML, options);
-  
-  // Generar nombre del archivo
-  const clientName = (cliente || 'reporte').toLowerCase().replace(/[^a-z0-9]/g, '_');
-  const dateStr = fecha || new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
-  const filename = `comparador_${clientName}_${dateStr}.html`;
-  
-  // Descargar
-  downloadHTML(htmlContent, filename);
-  
-  console.log(`✅ Snapshot HTML generado: ${filename}`);
+debugWarn('No se pudo convertir un canvas a imagen:', e);
+		}
+	}
+
+	// Generar el documento HTML
+	const htmlContent = createHTMLDocument(clone.innerHTML, options);
+
+	// Generar nombre del archivo
+	const clientName = (cliente || 'reporte').toLowerCase().replace(/[^a-z0-9]/g, '_');
+	const dateStr = fecha || new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+	const filename = `comparador_${clientName}_${dateStr}.html`;
+
+	// Descargar
+	downloadHTML(htmlContent, filename);
+
+	debugLog(`✅ Snapshot HTML generado: ${filename}`);
 }
 
 /**
@@ -385,7 +387,7 @@ export async function generateMultiSectionHTMLSnapshot(
   sections: { element: HTMLElement; title: string }[],
   options: HTMLSnapshotOptions
 ): Promise<void> {
-  console.log('🚀 Generando snapshot HTML multi-sección...');
+  debugLog('🚀 Generando snapshot HTML multi-sección...');
   
   const { title, cliente, fecha } = options;
   
@@ -402,7 +404,7 @@ export async function generateMultiSectionHTMLSnapshot(
     // Agregar título de sección
     combinedContent += `
       <section class="snapshot-section">
-        <h2 class="text-xl font-bold mb-4 text-[var(--text-primary)]">${section.title}</h2>
+        <h2 class="text-lg font-bold mb-4 text-[var(--text-primary)]">${section.title}</h2>
         ${clone.innerHTML}
       </section>
     `;
@@ -419,7 +421,7 @@ export async function generateMultiSectionHTMLSnapshot(
   // Descargar
   downloadHTML(htmlContent, filename);
   
-  console.log(`✅ Snapshot HTML multi-sección generado: ${filename}`);
+  debugLog(`✅ Snapshot HTML multi-sección generado: ${filename}`);
 }
 
 /**
@@ -429,7 +431,7 @@ export async function openHTMLSnapshotInNewTab(
   element: HTMLElement,
   options: HTMLSnapshotOptions
 ): Promise<void> {
-  console.log('🚀 Abriendo snapshot HTML en nueva pestaña...');
+  debugLog('🚀 Abriendo snapshot HTML en nueva pestaña...');
   
   // Clonar el elemento
   const clone = element.cloneNode(true) as HTMLElement;
@@ -448,19 +450,19 @@ export async function openHTMLSnapshotInNewTab(
       img.style.height = canvas.style.height || 'auto';
       canvas.replaceWith(img);
     } catch (e) {
-      console.warn('No se pudo convertir un canvas a imagen:', e);
-    }
-  }
-  
-  // Generar el documento HTML
-  const htmlContent = createHTMLDocument(clone.innerHTML, options);
-  
-  // Abrir en nueva pestaña
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
-  
-  console.log('✅ Snapshot HTML abierto en nueva pestaña');
+debugWarn('No se pudo convertir un canvas a imagen:', e);
+		}
+	}
+
+	// Generar el documento HTML
+	const htmlContent = createHTMLDocument(clone.innerHTML, options);
+
+	// Abrir en nueva pestaña
+	const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+	const url = URL.createObjectURL(blob);
+	window.open(url, '_blank');
+
+	debugLog('✅ Snapshot HTML abierto en nueva pestaña');
 }
 
 export default generateHTMLSnapshot;

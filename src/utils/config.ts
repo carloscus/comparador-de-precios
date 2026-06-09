@@ -1,3 +1,23 @@
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+
+export function debugLog(...args: unknown[]) {
+  if (import.meta.env.DEV) {
+    console.log('[DEBUG]', ...args);
+  }
+}
+
+export function debugWarn(...args: unknown[]) {
+  if (import.meta.env.DEV) {
+    console.warn('[DEBUG]', ...args);
+  }
+}
+
+export function debugError(...args: unknown[]) {
+  if (import.meta.env.DEV) {
+    console.error('[DEBUG]', ...args);
+  }
+}
+
 export const MAX_FECHAS = 160;
 export const MAX_AMOUNT = 10000000;
 export const MAX_CLIENT_DESC_LENGTH = 100;

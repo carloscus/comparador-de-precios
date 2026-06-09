@@ -25,12 +25,12 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses = 'btn focus-visible';
-  
+
   const variantClasses = {
-    primary: module ? 'btn-module' : 'bg-gray-900 text-white hover:bg-gray-800',
-    outline: module ? 'btn-outline' : 'border border-gray-300 text-gray-700 hover:bg-gray-50',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700',
-    link: 'bg-transparent text-blue-600 hover:text-blue-800 underline'
+    primary: module ? 'btn-module' : 'bg-[var(--color-primary-500)] text-[var(--color-btn-primary-text)] hover:bg-[var(--color-primary-600)]',
+    outline: 'border border-[var(--border-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]',
+    ghost: 'bg-transparent hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]',
+    link: 'bg-transparent text-[var(--color-info-500)] hover:text-[var(--color-info-600)] underline'
   };
 
   const sizeClasses = {
@@ -39,7 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
     lg: 'px-6 py-3 text-base'
   };
 
-  const moduleClass = module ? `module-${module}` : '';
+  const moduleClass = module ? `btn-module-${module} module-${module}` : '';
   const widthClass = fullWidth ? 'w-full' : '';
   const disabledClass = (disabled || loading) ? 'opacity-50 cursor-not-allowed' : '';
 

@@ -174,21 +174,21 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
   // --- F. Renderizado del Componente ---
   return (
     <div className="w-full">
-      <h2 className="text-xl font-bold mb-6 text-[var(--text-primary)] border-b border-[var(--border-primary)] pb-2">
+      <h2 className="text-base font-semibold mb-3 text-[var(--text-primary)] border-b border-[var(--border-primary)] pb-1">
         Datos Generales
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
 
         {/* Campos de Cliente y Documento */}
         {fieldConfig.showRucDni && (
           <>
             <FormGroup>
               <Label htmlFor="documento_cliente">Documento</Label>
-              <StyledInput id="documento_cliente" name="documento_cliente" value={formState.documento_cliente || ''} onChange={handleChange} placeholder="DNI: 12345678 | RUC: 20123456789" variant={variant} />
+              <StyledInput id="documento_cliente" name="documento_cliente" value={formState.documento_cliente || ''} onChange={handleChange} placeholder="DNI/RUC" variant={variant} className="h-7 text-sm" />
             </FormGroup>
             <FormGroup>
-              <Label htmlFor="cliente">Cliente / Razón Social</Label>
-              <StyledInput id="cliente" name="cliente" value={formState.cliente || ''} onChange={handleChange} placeholder="Nombre o razón social del cliente" variant={variant} />
+              <Label htmlFor="cliente">Cliente</Label>
+              <StyledInput id="cliente" name="cliente" value={formState.cliente || ''} onChange={handleChange} placeholder="Razón social" variant={variant} className="h-7 text-sm" />
             </FormGroup>
           </>
         )}
@@ -196,8 +196,8 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
         {/* Campo Código de Cliente */}
         {fieldConfig.showCodigoCliente && (
           <FormGroup>
-            <Label htmlFor="codigo_cliente">Código de Cliente</Label>
-            <StyledInput type="text" id="codigo_cliente" name="codigo_cliente" value={formState.codigo_cliente || ''} onChange={handleChange} placeholder="Opcional" variant={variant} />
+            <Label htmlFor="codigo_cliente">Cód.Cliente</Label>
+            <StyledInput type="text" id="codigo_cliente" name="codigo_cliente" value={formState.codigo_cliente || ''} onChange={handleChange} placeholder="Opcional" variant={variant} className="h-7 text-sm" />
           </FormGroup>
         )}
 
@@ -210,11 +210,11 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
         {fieldConfig.showFecha && (
           <FormGroup>
             <Label htmlFor="fecha">Fecha</Label>
-            <StyledInput type="date" id="fecha" name="fecha" value={formState.fecha || ''} onChange={handleChange} variant={variant} />
+            <StyledInput type="date" id="fecha" name="fecha" value={formState.fecha || ''} onChange={handleChange} variant={variant} className="h-7 text-sm" />
           </FormGroup>
         )}
 
-        {/* Campos de Marcas (Dinámicos) */}
+        {/* Campos de Marcas (Compacteros) */}
         {fieldConfig.showMarcas && (
           Array.from({ length: 5 }).map((_, i) => {
             const marcaKey = `marca${i + 1}`;
@@ -222,7 +222,7 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
 
             return (
               <FormGroup key={i}>
-                <Label htmlFor={marcaKey}>{`Marca ${i + 1}`}</Label>
+                <Label htmlFor={marcaKey} className="text-xs">{`Marca ${i + 1}`}</Label>
                 <div className="relative">
                   <StyledInput
                     type="text"
@@ -233,10 +233,10 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
                     onBlur={handleMarcaBlur}
                     placeholder={`Marca ${i + 1}`}
                     variant={variant}
+                    className="h-7 text-sm"
                   />
-                  {/* Tooltip para advertencia de duplicados */}
                   {hasTooltip && (
-                    <div className="absolute top-full left-0 mt-1 px-2 py-1 text-xs text-white bg-[var(--color-gray-800)] rounded shadow-lg z-10 max-w-xs">
+                     <div className="absolute top-full left-0 mt-1 px-2 py-1 text-xs bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded shadow-lg z-10 max-w-xs border border-[var(--border-primary)]">
                       {marcaTooltips[marcaKey]}
                     </div>
                   )}
@@ -249,15 +249,15 @@ export const DatosGeneralesForm = React.forwardRef<{ getGeneralData: () => Recor
         {/* Campo Monto Original */}
         {fieldConfig.showMontoOriginal && (
           <FormGroup>
-            <Label htmlFor="montoOriginal">Monto Total (S/)</Label>
-            <StyledInput id="montoOriginal" name="montoOriginal" type="number" required value={formState.montoOriginal || ''} onChange={handleChange} variant={variant} max={1000000} step={0.01} className="input-qty w-32" />
+            <Label htmlFor="montoOriginal">Monto (S/)</Label>
+            <StyledInput id="montoOriginal" name="montoOriginal" type="number" required value={formState.montoOriginal || ''} onChange={handleChange} variant={variant} max={1000000} step={0.01} className="input-qty w-28 h-7 text-sm" />
           </FormGroup>
         )}
 
         {/* Botón de Carga de Respaldo */}
         {fieldConfig.showCargarRespaldo && (
-          <div className="lg:col-span-3 flex justify-end items-center mt-2">
-            <button type="button" onClick={onOpenBackupModal} title="Cargar un estado guardado previamente" className="btn btn-primary">
+          <div className="lg:col-span-5 flex justify-end items-center mt-2">
+            <button type="button" onClick={onOpenBackupModal} title="Cargar un estado guardado previamente" className="btn btn-primary btn-sm">
               Cargar Respaldo
             </button>
           </div>

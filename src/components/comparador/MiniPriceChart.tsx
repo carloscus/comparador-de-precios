@@ -1,65 +1,64 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface MiniPriceChartProps {
     prices: { label: string; value: number | null }[];
+    highlightCheapest?: boolean;
 }
 
-/**
- * MiniPriceChart Component
- * 
- * Renders a small, elegant bar chart to compare prices between different brands.
- * Designed to fit perfectly within a table cell.
- */
-export const MiniPriceChart: React.FC<MiniPriceChartProps> = ({ prices }) => {
-    // Filter out null or zero prices for calculation
+export const MiniPriceChart: React.FC<MiniPriceChartProps> = ({ prices, highlightCheapest = true }) => {
     const validPrices = prices.filter((p) => p.value !== null && p.value > 0) as { label: string; value: number }[];
 
-    if (validPrices.length === 0) {
-        return <div className="h-8 flex items-center justify-center text-[var(--text-tertiary)] text-[10px] italic">Sin datos</div>;
+    const chartMetrics = useMemo(() => {
+        if (validPrices.length === 0) return null;
+        return {
+            max: Math.max(...validPrices.map((p) => p.value)),
+            min: Math.min(...validPrices.map((p) => p.value)),
+            range: null,
+        };
+    }, [validPrices]);
+
+    if (!chartMetrics) {
+        return <div className="h-10 flex items-center justify-center text-[var(--text-tertiary)] text-[11px] italic">Sin datos</div>;
     }
 
-    // Find max price to normalize bar heights
-    const maxPrice = Math.max(...validPrices.map((p) => p.value));
-
-    // Find min and max prices to highlight cheapest and most expensive
-    const minPrice = Math.min(...validPrices.map((p) => p.value));
-    const maxPriceValue = Math.max(...validPrices.map((p) => p.value));
+    const { max, min } = chartMetrics;
 
     return (
-        <div className="flex items-end gap-1 h-10 w-28 bg-[var(--bg-tertiary)]/30 p-1 rounded-md border border-[var(--border-secondary)]/50 group">
+        <div className="flex items-end gap-1 h-12 w-full max-w-56 bg-[var(--bg-tertiary)]/20 p-1.5 rounded-lg border border-[var(--border-secondary)]/30 group">
             {prices.map((p, idx) => {
                 const value = p.value || 0;
-                const height = maxPrice > 0 ? (value / maxPrice) * 100 : 0;
-
-                // Styling logic
+                const height = max > 0 ? (value / max) * 100 : 0;
                 const isBase = idx === 0;
-                const isCheapest = value === minPrice && validPrices.length > 1;
-                const isMostExpensive = value === maxPriceValue && validPrices.length > 1 && !isBase;
+                const isCheapest = highlightCheapest && value === min && validPrices.length > 1 && !isBase;
+                const isMostExpensive = value === max && validPrices.length > 1 && !isBase;
 
-                let barColor = 'bg-[var(--text-tertiary)] opacity-40';
-                if (isBase) {
-                    barColor = 'bg-gradient-to-t from-[var(--color-comparador-primary)] to-[var(--color-comparador-secondary)]';
-                } else if (isCheapest) {
-                    barColor = 'bg-gradient-to-t from-[var(--color-success)] to-[var(--color-success)]/70';
-                } else if (isMostExpensive) {
-                    barColor = 'bg-gradient-to-t from-red-300 to-red-200';
-                }
+                const barClasses = [
+                    'absolute bottom-0 w-full rounded-t-[3px]',
+                    'transition-all duration-500 ease-out',
+                    isBase
+                        ? 'bg-[var(--color-primary-500)] shadow-sm'
+                        : isCheapest
+                            ? 'bg-[var(--color-success-500)] shadow-sm'
+                            : isMostExpensive
+                                ? 'bg-[var(--color-error-500)] shadow-sm'
+                                : 'bg-[var(--text-secondary)] opacity-50',
+                ].join(' ');
 
                 return (
                     <div
                         key={idx}
                         className="relative flex-1 group/bar"
                         style={{ height: '100%' }}
+                        title={`${p.label}: ${value > 0 ? `S/ ${value.toFixed(2)}` : 'N/A'}`}
                     >
                         <div
-                            className={`absolute bottom-0 w-full rounded-t-[2px] transition-all duration-500 ease-out ${barColor} ${isBase ? 'opacity-100' : 'group-hover:opacity-80'}`}
-                            style={{ height: `${height}%` }}
+                            className={barClasses}
+                            style={{ height: `${Math.max(height, 8)}%` }}
                         />
 
-                        {/* Tooltip on hover */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover/bar:block z-10">
-                            <div className="bg-[var(--surface-elevated)] text-[var(--text-primary)] text-[10px] py-1 px-2 rounded shadow-lg border border-[var(--border-primary)] whitespace-nowrap font-bold">
-                                {p.label}: {value > 0 ? `S/ ${value.toFixed(2)}` : 'N/A'}
+                        <div className="absolute -bottom-6 sm:-bottom-5 left-1/2 -translate-x-1/2 hidden group-hover/bar:block z-50">
+                            <div className="bg-[var(--surface-elevated)] text-[var(--text-primary)] text-xs sm:text-sm font-mono font-bold py-1 px-2 rounded shadow-md border border-[var(--border-primary)] whitespace-nowrap">
+                                {p.label}
                             </div>
                         </div>
                     </div>
@@ -68,3 +67,5 @@ export const MiniPriceChart: React.FC<MiniPriceChartProps> = ({ prices }) => {
         </div>
     );
 };
+
+export default MiniPriceChart;

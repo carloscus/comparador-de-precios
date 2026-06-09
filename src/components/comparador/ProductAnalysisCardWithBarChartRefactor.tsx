@@ -1,190 +1,219 @@
-import React from 'react';
-import { ComparisonTableRow } from '../../pages/ComparadorPage';
+import React, { useState } from 'react';
+import type { ComparisonTableRow } from '../../interfaces';
 import { getBrandColorByPosition } from '../../utils/colorScheme';
+import { useCompetitiveAnalysis } from '../../hooks/useCompetitiveAnalysis';
+import { Target, ChevronDown, ChevronUp } from 'lucide-react';
 import '../../styles/print-report.css';
 
 interface ProductAnalysisCardWithBarChartRefactorProps {
-  item: ComparisonTableRow;
-  competidores: string[];
-  onExpand?: (item: ComparisonTableRow) => void;
-  highlightedBrand?: string | null;
-  onBrandHover?: (brandName: string | null) => void;
+   item: ComparisonTableRow;
+   competidores: string[];
+   onExpand?: (item: ComparisonTableRow) => void;
+   highlightedBrand?: string | null;
+   onBrandHover?: (brandName: string | null) => void;
 }
 
 export const ProductAnalysisCardWithBarChartRefactor: React.FC<ProductAnalysisCardWithBarChartRefactorProps> = ({
-  item,
-  competidores,
-  onExpand,
-  highlightedBrand,
-  onBrandHover,
+   item,
+   competidores,
+   onExpand,
+   highlightedBrand,
+   onBrandHover,
 }) => {
-  const myBrand = competidores[0];
-  const myPrice = item.precios?.[myBrand] ?? 0;
-  
-  const allPrices = competidores.map(comp => ({
-    label: comp,
-    value: item.precios?.[comp] ?? null
-  }));
+   const [isExpanded, setIsExpanded] = useState(true);
+   const {
+     myPrice,
+     allPrices,
+     analysis: { myPosition, bestDiff, worstDiff, validPrices },
+     statistics: { min: minPrice, max: maxPrice, average: avgPrice },
+     formatPercentageWithIndicator,
+   } = useCompetitiveAnalysis(item, competidores);
 
-  const validPrices = allPrices.filter(p => p.value !== null && p.value > 0);
-  const sortedPrices = [...validPrices].sort((a, b) => (a.value || 0) - (b.value || 0));
-  const myPosition = sortedPrices.findIndex(p => p.label === myBrand) + 1;
+   const avgGap = avgPrice > 0 && myPrice > 0 ? ((myPrice - avgPrice) / avgPrice) * 100 : 0;
 
-  const percentageDifferences = allPrices
-    .filter(p => p.label !== myBrand && p.value !== null && p.value > 0 && myPrice > 0)
-    .map(p => {
-      const diff = ((p.value! - myPrice) / myPrice) * 100;
-      return {
-        name: p.label,
-        percentage: diff,
-        isBetter: diff < 0
-      };
-    });
+   const priceVolatility = validPrices.length > 0
+     ? ((maxPrice - minPrice) / avgPrice) * 100
+     : 0;
 
-  const bestDiff = percentageDifferences.filter(p => p.isBetter).sort((a,b) => a.percentage - b.percentage)[0] || null;
-  const worstDiff = percentageDifferences.filter(p => !p.isBetter).sort((a,b) => b.percentage - a.percentage)[0] || null;
+   const maxChartValue = validPrices.length > 0 ? Math.max(...validPrices.map(p => p.value || 0)) : 1;
 
-  const avgPrice = validPrices.length > 0 ? validPrices.reduce((sum, p) => sum + (p.value || 0), 0) / validPrices.length : 0;
-  const minPrice = validPrices.length > 0 ? Math.min(...validPrices.map(p => p.value || 0)) : 0;
-  const maxPrice = validPrices.length > 0 ? Math.max(...validPrices.map(p => p.value || 0)) : 0;
-  
-  const maxChartValue = validPrices.length > 0 ? Math.max(...validPrices.map(p => p.value || 0)) : 1;
+   const chartData = competidores.map((brandName, index) => {
+     const label = index === 0 ? 'MI' : brandName;
+     const priceData = allPrices.find(p => p.label.toLowerCase() === brandName.toLowerCase());
 
-  const chartData = competidores.map((brandName, index) => {
-    const label = index === 0 ? 'MI' : brandName;
-    const priceData = allPrices.find(p => p.label.toLowerCase() === brandName.toLowerCase());
-    
-    let percentageDiff: string | undefined = undefined;
-    if (index > 0) { // Solo para competidores
-        const percentageKey = `% vs ${brandName}`;
-        const value = item[percentageKey] as string | undefined;
-        // Asumimos que el valor ya es un string formateado como "xx.x%"
-        if (value) {
-          percentageDiff = value;
-        }
-    }
+     let percentageDiff: string | undefined = undefined;
+     if (index > 0) {
+       const percentageKey = `% vs ${brandName}`;
+       const value = item[percentageKey] as string | undefined;
+       if (value) {
+         percentageDiff = value;
+       }
+     }
 
-    return {
-      label: label,
-      value: priceData?.value ?? null,
-      originalName: brandName,
-      percentage: percentageDiff,
-    };
-  });
+     return {
+       label,
+       value: priceData?.value ?? null,
+       originalName: brandName,
+       percentage: percentageDiff,
+     };
+   });
 
   return (
-    <div 
-      className="product-comparison-card bg-[var(--surface-elevated)] border border-[var(--border-primary)] rounded-lg p-4 mb-4 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 print:h-[25vh] print:shadow-none print:border-gray-300 print:p-2 print:break-inside-avoid"
+    <article
+       className="product-comparison-card glass border border-[var(--border-primary)] rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col print:h-auto print:shadow-none print:border-[var(--border-primary)] print:p-2 print:break-inside-avoid focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)]"
       onClick={() => onExpand?.(item)}
+      onKeyDown={(e) => e.key === 'Enter' && onExpand?.(item)}
       role="button"
       tabIndex={0}
+      aria-label={`Analizar producto ${item.nombre}`}
     >
-      {/* Columna Izquierda: Encabezado y Gráfico */}
-      <div className="left-column md:w-1/2 flex flex-col">
-        <div className="header-section text-center mb-2">
-          <h3 className="text-base font-bold uppercase text-[var(--text-primary)] print:text-sm">{item.nombre}</h3>
-          <div className="text-lg font-bold bg-yellow-300 text-yellow-900 px-2 py-1 rounded-md print:text-base">S/ {myPrice.toFixed(2)}</div>
+      {/* Header - Nombre y Precio */}
+      <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 py-2 sm:px-3.5 sm:py-2.5 border-b border-[var(--border-primary)]">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] truncate leading-tight" title={item.nombre}>{item.nombre}</h3>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">SKU: {item.codigo}</p>
         </div>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+           <div className="text-sm sm:text-base font-bold font-mono px-2.5 sm:px-3 py-1 rounded-lg flex-shrink-0" style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)' }}>
+             S/ {myPrice.toFixed(2)}
+           </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+            className="p-1.5 rounded-md hover:bg-[var(--surface-secondary)] transition-colors flex-shrink-0"
+            aria-label={isExpanded ? 'Colapsar detalles' : 'Expandir detalles'}
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-secondary)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-secondary)]" />}
+          </button>
+        </div>
+      </div>
 
-        <div className="chart-section flex-grow flex flex-col justify-center">
-          <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2 print:text-xs">Comparativa de Precios</h4>
-          <div className="space-y-1.5">
-            {chartData.map((price, index) => {
-              const widthPercentage = price.value ? (price.value / maxChartValue) * 100 : 0;
-              const color = getBrandColorByPosition(price.originalName, competidores);
-              const isDimmed = highlightedBrand && highlightedBrand.toLowerCase() !== price.originalName.toLowerCase();
+      {isExpanded && (
+        <div className="flex flex-col lg:flex-row text-sm">
+          {/* Left - Gráfico de Comparación */}
+          <div className="flex-1 px-3 py-2.5 sm:px-3.5 sm:py-3">
+            <h4 className="text-xs font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="w-1 h-1 rounded-full bg-blue-600"></div>
+              Comparativa
+            </h4>
+            <div className="space-y-1.5">
+              {chartData.map((price, index) => {
+                const widthPercentage = price.value ? (price.value / maxChartValue) * 100 : 0;
+                const color = getBrandColorByPosition(price.originalName, competidores);
+                const isDimmed = highlightedBrand && highlightedBrand.toLowerCase() !== price.originalName.toLowerCase();
+                const isBase = index === 0;
+                const isCheapest = !isBase && price.value && validPrices.length > 1 && price.value === Math.min(...validPrices.filter(p => p.label.toLowerCase() !== competidores[0].toLowerCase()).map(p => p.value || 0));
 
-              return (
-                <div 
-                  key={index} 
-                  className={`flex items-center gap-2 text-xs print:text-[10px] transition-opacity duration-200 ${isDimmed ? 'opacity-40' : 'opacity-100'}`}
-                  onMouseEnter={() => onBrandHover?.(price.originalName)}
-                  onMouseLeave={() => onBrandHover?.(null)}
-                >
-                  <div className="w-16 font-medium text-[var(--text-tertiary)] truncate">{price.label}</div>
-                  <div className="flex-1 bg-[var(--bg-tertiary)] rounded-full h-5 print:h-4 relative overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${widthPercentage}%`,
-                        backgroundColor: color,
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-between px-2 text-xs font-bold">
-                      <span className="bg-black/20 px-1 rounded text-white">{price.value ? `S/ ${price.value.toFixed(2)}` : 'N/A'}</span>
+                return (
+                  <div
+                    key={index}
+                    className={`glass-bar-container group/bar transition-opacity duration-200 ${isDimmed ? 'opacity-40' : ''}`}
+                    onMouseEnter={() => onBrandHover?.(price.originalName)}
+                    onMouseLeave={() => onBrandHover?.(null)}
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className={`font-semibold truncate ${isBase ? 'text-blue-700 dark:text-blue-400' : isCheapest ? 'text-[var(--color-on-surface-success)]' : 'text-[var(--text-secondary)]'}`}>
+                        {price.label}
+                        {isBase && <span className="ml-0.5 text-[10px] font-normal opacity-70">(tu)</span>}
+                      </span>
+                      <span className="font-mono font-bold text-[var(--text-primary)] ml-1.5 text-xs">
+                        {price.value ? `S/ ${price.value.toFixed(2)}` : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="relative h-5 sm:h-5.5 bg-[var(--bg-tertiary)]/50 rounded-md overflow-hidden border border-[var(--border-secondary)]/30">
+                      <div
+                        className="h-full rounded-md transition-all duration-500 ease-out"
+                        style={{
+                          width: `${Math.max(widthPercentage, 10)}%`,
+                          backgroundColor: color,
+                        }}
+                      />
                       {price.percentage && (
-                        <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold ${parseFloat(price.percentage) < 0 ? 'bg-green-500/80 text-white' : 'bg-red-500/80 text-white'}`}>
-                          {parseFloat(price.percentage) < 0 ? '▼' : '▲'}
-                          {price.percentage}
+                        <span className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-xs font-bold px-1 py-0.5 rounded shadow-sm whitespace-nowrap ${parseFloat(price.percentage) < 0 ? 'bg-[var(--color-success-500)] text-[var(--color-text-inverse)]' : 'bg-[var(--color-error-500)] text-[var(--color-text-inverse)]'}`}>
+                          {parseFloat(price.percentage) < 0 ? '▼' : '▲'}{parseFloat(price.percentage) < 0 ? Math.abs(parseFloat(price.percentage)).toFixed(1) : (parseFloat(price.percentage)).toFixed(1)}%
                         </span>
                       )}
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Columna Derecha: Bloques de texto */}
-      <div className="right-column md:w-1/2 flex items-stretch">
-        <div className="text-section w-full grid grid-cols-2 gap-2 text-sm print:text-xs">
-          <InfoBlock label="Código" value={item.codigo} />
-          <InfoBlock label="Ranking">
-            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 bg-[var(--color-info)]/10 text-[var(--color-info)] border border-[var(--color-info)]/20 rounded-full text-xs font-bold">
-              {myPosition > 0 ? `${myPosition}°` : 'N/A'}
-            </span>
-          </InfoBlock>
-          <InfoBlock label="Total marcas" value={validPrices.length} />
-          {bestDiff ? (
-            <InfoBlock label="Mejor vs MI" value={`▼ ${Math.abs(bestDiff.percentage).toFixed(2)}%`} specialStyle="success" />
-          ) : <div className="bg-[var(--surface-secondary)] rounded-md" />}
-          {worstDiff ? (
-            <InfoBlock label="Peor vs MI" value={`▲ ${Math.abs(worstDiff.percentage).toFixed(2)}%`} specialStyle="danger" />
-          ) : <div className="bg-[var(--surface-secondary)] rounded-md" />}
-          <InfoBlock 
-            label="Precio Sugerido" 
-            value={item.precio_sugerido ? `S/ ${item.precio_sugerido.toFixed(2)}` : 'N/A'}
-            valueClassName="text-[var(--color-accent)] font-bold"
-          />
-          <InfoBlock label="Precio mínimo" value={`S/ ${minPrice.toFixed(2)}`} />
-          <InfoBlock label="Precio máximo" value={`S/ ${maxPrice.toFixed(2)}`} />
-          <div className="col-span-2">
-            <InfoBlock label="Producto" value={item.nombre} valueClassName="uppercase text-xs" />
+          {/* Right - KPIs Compactos */}
+          <div className="flex-1 px-3 py-2.5 sm:px-3.5 sm:py-3 border-t lg:border-t-0 lg:border-l border-[var(--border-primary)] flex flex-col gap-2">
+             {/* Top Row - Código, Participación, Ranking */}
+             <div className="grid grid-cols-3 gap-2">
+               <InfoBlock label="Código" value={item.codigo} mono compact />
+               <InfoBlock label="Part." value={`${validPrices.length}/${competidores.length}`} compact />
+               <InfoBlock label="Rank." variant="accent" compact>
+                 <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full font-bold text-xs shadow-sm" style={{ backgroundColor: 'var(--color-primary-500)', color: 'var(--color-text-inverse)' }}>
+                   {myPosition > 0 ? `${myPosition}°` : 'N/A'}
+                 </span>
+               </InfoBlock>
+             </div>
+
+            {/* Middle - Brecha vs Promedio (Compacto) */}
+              <div className="rounded-md border px-2.5 py-2" style={{ borderColor: 'var(--border-primary)', backgroundColor: 'var(--bg-tertiary)' }}>
+              <div className="flex items-center gap-1 mb-1">
+                <Target className="w-3 h-3" style={{ color: 'var(--color-primary-500)' }} />
+                <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Brecha</span>
+              </div>
+              <div className={`text-lg sm:text-xl font-bold font-mono leading-none ${avgGap < 0 ? 'text-[var(--color-on-surface-success)]' : avgGap > 0 ? 'text-[var(--color-on-surface-error)]' : 'text-[var(--text-tertiary)]'}`}>
+                {avgGap < 0 ? `▼ ${Math.abs(avgGap).toFixed(1)}%` : avgGap > 0 ? `▲ +${avgGap.toFixed(1)}%` : '0.0%' }
+              </div>
+            </div>
+
+            {/* Bottom Row - Volatilidad, Mejor, Peor */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <InfoBlock label="Volat." value={`${priceVolatility.toFixed(1)}%`} mono light compact />
+              <InfoBlock label="Mejor" value={bestDiff ? formatPercentageWithIndicator(bestDiff.percentage) : '-'} variant="success" compact />
+              <InfoBlock label="Peor" value={worstDiff ? formatPercentageWithIndicator(worstDiff.percentage) : '-'} variant="danger" compact />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </article>
   );
 };
 
-// Componente auxiliar para los bloques de información
 const InfoBlock: React.FC<{
   label: string;
   value?: string | number;
   valueClassName?: string;
   children?: React.ReactNode;
-  specialStyle?: 'success' | 'danger' | null;
-}> = ({ label, value, valueClassName, children, specialStyle = null }) => {
-
-  const styleClasses = {
-    base: 'text-block p-2 rounded-md flex justify-between items-center h-full',
-    success: 'bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20',
-    danger: 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] border border-[var(--color-danger)]/20',
-    default: 'bg-[var(--surface-secondary)]',
+  variant?: 'success' | 'danger' | 'accent' | 'neutral';
+  mono?: boolean;
+  light?: boolean;
+  compact?: boolean;
+}> = ({ label, value, valueClassName, children, variant = 'neutral', mono = false, light = false, compact = false }) => {
+  const variantClasses = {
+    base: compact 
+      ? 'rounded-md border flex flex-col items-center justify-center text-center p-1.5 min-h-[56px] sm:min-h-[60px]'
+      : 'rounded-md border flex flex-col items-center justify-center text-center p-2 sm:p-2.5 min-h-[72px] sm:min-h-[80px]',
+success: 'bg-[var(--surface-elevated)] border-[var(--color-success-300)]',
+  danger: 'bg-[var(--surface-elevated)] border-[var(--color-error-300)]',
+    accent: 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]',
+     neutral: light ? 'bg-[var(--bg-tertiary)]/60 border-[var(--border-secondary)]' : 'bg-[var(--surface-glass)] border-[var(--border-primary)]',
   };
 
-  const labelColor = specialStyle ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]';
-  const valueColor = specialStyle ? `font-bold` : '';
-  
-  const finalClassName = `${styleClasses.base} ${specialStyle ? styleClasses[specialStyle] : styleClasses.default}`;
+  const textColorClass = variant === 'success' ? 'text-green-700 dark:text-green-400'
+    : variant === 'danger' ? 'text-red-700 dark:text-red-400'
+    : variant === 'accent' ? 'text-[var(--text-primary)]'
+    : 'text-[var(--text-secondary)]';
 
   return (
-    <div className={finalClassName}>
-      <span className={`font-semibold ${labelColor}`}>{label}:</span>
-      {value !== undefined && <span className={`block ${valueColor} ${valueClassName || ''}`}>{value}</span>}
+    <div className={`${variantClasses.base} ${variantClasses[variant]}`}>
+      <span className={`text-xs font-semibold uppercase tracking-wider ${textColorClass} leading-tight`}>
+        {label}
+      </span>
+      {value !== undefined && (
+        <span className={`text-xs sm:text-sm font-bold mt-1 leading-tight truncate w-full ${mono ? 'font-mono' : ''} ${textColorClass} ${valueClassName || ''}`}>
+          {value}
+        </span>
+      )}
       {children}
     </div>
   );
 };
+
+export default ProductAnalysisCardWithBarChartRefactor;

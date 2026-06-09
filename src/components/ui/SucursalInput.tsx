@@ -2,7 +2,6 @@ import React from 'react';
 import { StyledInput, type InputProps } from './StyledInput';
 import { FormGroup, Label } from './FormControls';
 
-// Get the variant type from InputProps
 type VariantProp = InputProps['variant'];
 
 interface SucursalInputProps {
@@ -35,3 +34,5 @@ export const SucursalInput: React.FC<SucursalInputProps> = ({
     </FormGroup>
   );
 };
+
+export default SucursalInput;

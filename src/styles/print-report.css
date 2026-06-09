@@ -1,12 +1,56 @@
 @media print {
-  .product-comparison-card {
-    page-break-inside: avoid;
-    height: 25vh;
-    border: 1px solid #ccc;
-    margin-bottom: 0.5rem;
+  @page {
+    margin: 1.5cm 1cm;
   }
+
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background: white !important;
+    color: black !important;
+  }
+
+  .product-comparison-card {
+    page-break-inside: avoid;
+    height: auto;
+    min-height: 120px;
+    border: 1px solid #ccc;
+    margin-bottom: 0.5rem;
+    box-shadow: none !important;
+  }
+
+  .glass-card,
+  .glass {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    backdrop-filter: none !important;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  button,
+  .btn,
+  .tooltip,
+  .theme-toggle-btn,
+  [role="button"] {
+    display: none !important;
+  }
+
+  .sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    border: 0 !important;
+  }
+
+  svg {
+    filter: grayscale(100%);
   }
 }

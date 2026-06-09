@@ -5,10 +5,10 @@
 // MANTENIMIENTO:
 // - Store principal de Zustand para el módulo de precios
 // - Usa persistencia en localStorage (clave: 'app-storage')
-// - El catálogo se carga desde public/data/productos.json
+// - El catálogo se carga desde public/data/catalogo_productos.json
 // - También usa IndexedDB para caché del catálogo
 // - Si el catálogo no carga, verificar: 
-//   1. El archivo public/data/productos.json existe
+//   1. El archivo public/data/catalogo_productos.json existe
 //   2. El servidor de desarrollo está corriendo
 //   3. No hay errores de CORS
 //
@@ -25,21 +25,15 @@ import type { IForm, IProducto, IProductoEditado } from '../interfaces';
 
 // --- Tipos Adicionales ---
 
-interface ModuleStats {
-  precios: number;
-}
-
 interface RawProduct {
-  codigo?: string | number;
+  sku?: string | number;
   nombre?: string;
-  ean?: string;
-  ean_14?: string;
+  ean13?: string;
   linea?: string;
-  can_kg_um?: number;
-  stock_referencial?: number;
-  precio?: number;
-  u_por_caja?: number;
-  keywords?: string;
+  peso_kg?: number;
+  precio_lista?: number;
+  un_bx?: number;
+  keywords?: string[];
 }
 
 
@@ -47,9 +41,6 @@ interface RawProduct {
 export interface State {
   catalogo: IProducto[];
   catalogCount: number;
-  moduleUsage: ModuleStats;
-  incompleteTasks: number;
-  lastActivity: { [key: string]: Date };
   formState: {
     precios: IForm;
   };
@@ -63,10 +54,6 @@ export interface State {
 
 // --- 3. Definición de las Acciones (Actions) ---
 interface Actions {
-  updateModuleUsage: () => void;
-  addIncompleteTask: () => void;
-  completeTask: () => void;
-  recordActivity: () => void;
   cargarCatalogo: () => Promise<void>;
   actualizarFormulario: (campo: keyof IForm, valor: string | number) => void;
   agregarProductoToLista: (producto: IProducto) => void;
@@ -76,6 +63,7 @@ interface Actions {
     valor: IProductoEditado[K]
   ) => void;
   eliminarProductoDeLista: (codigo: string) => void;
+  importarProductosMasivamente: (rows: any[]) => void;
   resetearModulo: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
 }
@@ -84,11 +72,6 @@ interface Actions {
 const initialState: Omit<State, keyof Actions> = {
   catalogo: [],
   catalogCount: 0,
-  moduleUsage: {
-    precios: 45,
-  },
-  incompleteTasks: 5,
-  lastActivity: { precios: new Date() },
   formState: {
     precios: {} as IForm,
   },
@@ -103,16 +86,15 @@ const initialState: Omit<State, keyof Actions> = {
 // --- 5. Adaptador de Datos para el nuevo JSON de productos ---
 const mapRawProductToIProducto = (rawProduct: RawProduct): IProducto => {
   return {
-    codigo: String(rawProduct.codigo || ''),
+    codigo: String(rawProduct.sku || ''),
     nombre: rawProduct.nombre || '',
-    cod_ean: rawProduct.ean || '',
-    ean_14: rawProduct.ean_14 || '',
+    ean_14: rawProduct.ean13 || '',
     linea: rawProduct.linea || '',
-    peso: rawProduct.can_kg_um || 0,
-    stock_referencial: rawProduct.stock_referencial || 0,
-    precio_referencial: rawProduct.precio || 0,
-    cantidad_por_caja: rawProduct.u_por_caja || 0,
-    keywords: (rawProduct.keywords || '').trim().split(/\s+/).filter(Boolean),
+    peso: rawProduct.peso_kg || 0,
+    stock_referencial: 0, // No presente en este export de JSON
+    precio_referencial: rawProduct.precio_lista || 0,
+    cantidad_por_caja: rawProduct.un_bx || 1,
+    keywords: Array.isArray(rawProduct.keywords) ? rawProduct.keywords : [],
   };
 };
 
@@ -143,12 +125,13 @@ export const useAppStore = create<State & Actions>()(
           // Cargar catálogo desde el frontend (public/data/productos.json)
           // El backend se usa solo para cálculos complejos y exportaciones
           const baseUrl = import.meta.env.BASE_URL;
-          const response = await fetch(`${baseUrl}data/productos.json`);
+          const response = await fetch(`${baseUrl}data/catalogo_productos.json`);
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`No se pudo cargar el catálogo de productos. Estado: ${response.status}, Mensaje: ${errorText}`);
           }
-          const rawData: RawProduct[] = await response.json();
+          const data = await response.json();
+          const rawData: RawProduct[] = data.productos || [];
 
           // Adaptar los datos crudos al formato IProducto
           const mappedData = rawData.map(mapRawProductToIProducto);
@@ -192,7 +175,7 @@ export const useAppStore = create<State & Actions>()(
             cantidad: 1,
             observaciones: '',
             precios: {},
-            precio_sugerido: undefined,
+      
           };
           set((state) => ({
             listas: {
@@ -214,8 +197,8 @@ export const useAppStore = create<State & Actions>()(
             precios: state.listas.precios.map((p) => {
               if (p.codigo !== codigo) return p;
               // Special handling for numeric conversions
-              if (campo === 'cantidad' || campo === 'precio_sugerido') {
-                const numericValue = typeof valor === 'string' ? parseInt(valor, 10) : valor;
+              if (campo === 'cantidad') {
+                const numericValue = typeof valor === 'string' ? parseFloat(valor) : valor;
                 return { ...p, [campo]: isNaN(numericValue as number) ? 0 : numericValue };
               }
               return { ...p, [campo]: valor };
@@ -233,8 +216,42 @@ export const useAppStore = create<State & Actions>()(
         }));
       },
 
+      importarProductosMasivamente: (rows) => {
+        const { catalogo, listas } = get();
+        const currentList = [...listas.precios];
+        
+        rows.forEach(row => {
+          // Buscar producto en catálogo por SKU (codigo)
+          const product = catalogo.find(p => p.codigo === String(row.sku || row.SKU || ''));
+          if (!product) return;
+
+          const existingIdx = currentList.findIndex(p => p.codigo === product.codigo);
+          
+          const preciosNuevos: Record<string, number> = {};
+          // Mapear precios dinámicos según las columnas del Excel
+          Object.entries(row).forEach(([key, val]) => {
+            if (key.startsWith('PRECIO_') && val !== null && val !== undefined) {
+              const brandName = key.replace('PRECIO_', '').replace(/_/g, ' ');
+              preciosNuevos[brandName] = Number(val);
+            }
+          });
+
+          const productoEditado: IProductoEditado = {
+            ...(existingIdx > -1 ? currentList[existingIdx] : { ...product, cantidad: 1, observaciones: '', precios: {} }),
+            precios: { ...preciosNuevos }
+          };
+
+          if (existingIdx > -1) {
+            currentList[existingIdx] = productoEditado;
+          } else {
+            currentList.push(productoEditado);
+          }
+        });
+
+        set({ listas: { precios: currentList } });
+      },
+
       resetearModulo: () => {
-        console.log('Reseteando módulo precios');
         set((state) => ({
           formState: {
             ...state.formState,
@@ -247,28 +264,6 @@ export const useAppStore = create<State & Actions>()(
         }));
       },
 
-      updateModuleUsage: () => set((state) => ({
-        moduleUsage: {
-          ...state.moduleUsage,
-          precios: Math.min(100, state.moduleUsage.precios + Math.random() * 10)
-        }
-      })),
-
-      recordActivity: () => set((state) => ({
-        lastActivity: {
-          ...state.lastActivity,
-          precios: new Date()
-        }
-      })),
-
-      addIncompleteTask: () => set((state) => ({
-        incompleteTasks: state.incompleteTasks + 1
-      })),
-
-      completeTask: () => set((state) => ({
-        incompleteTasks: Math.max(0, state.incompleteTasks - 1)
-      })),
-
       setTheme: (theme: 'light' | 'dark') => set(() => ({
         theme: theme
       }))
@@ -278,9 +273,6 @@ export const useAppStore = create<State & Actions>()(
       partialize: (state) => ({
         formState: state.formState,
         listas: state.listas,
-        moduleUsage: state.moduleUsage,
-        incompleteTasks: state.incompleteTasks,
-        lastActivity: state.lastActivity,
         theme: state.theme,
       }),
       storage: createJSONStorage(() => localStorage),

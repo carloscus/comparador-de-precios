@@ -8,11 +8,29 @@ interface ToastContainerProps {
 }
 
 const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
+  if (toasts.length === 0) return null;
+
   return (
-    <div className="fixed inset-0 flex items-end justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
-      <div className="max-w-sm w-full">
-        {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} onClose={onClose} />
+    <div
+      className="fixed z-[9999] flex flex-col gap-3"
+      style={{
+        top: '80px',
+        right: '20px',
+        maxHeight: 'calc(100vh - 100px)',
+        overflow: 'hidden',
+      }}
+      aria-label="Notificaciones"
+      role="region"
+    >
+      <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+        {toasts.map((toast, index) => (
+          <div
+            key={toast.id}
+            className="animate-slide-up"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
+            <Toast {...toast} onClose={onClose} />
+          </div>
         ))}
       </div>
     </div>
