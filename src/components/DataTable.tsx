@@ -8,6 +8,7 @@
 import React, { useState, useMemo } from 'react';
 import { Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Tooltip } from './ui/Tooltip';
+import { useAppStore } from '../store/useAppStore';
 
 // --- 2. Definición de las Props del Componente ---
 export interface IColumn<T> {
@@ -55,8 +56,8 @@ export const DataTable = <T extends { codigo: string }>({
    expandable = false,
    renderExpansion,
    pageSize = 50,
- }: Props<T> & { striped?: boolean }) => {
-   const compactClasses = compact ? 'table-compact' : '';
+  }: Props<T> & { striped?: boolean }) => {
+    const compactClasses = compact ? 'table-compact' : '';
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -105,9 +106,28 @@ export const DataTable = <T extends { codigo: string }>({
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
+  const formState = useAppStore((state) => state.formState);
+  const filteredColumns = useMemo(() => {
+    const pricesForm = formState?.precios || {};
+    const m3Active = !!pricesForm.marca3?.trim();
+    const m4Active = !!pricesForm.marca4?.trim();
+    const m5Active = !!pricesForm.marca5?.trim();
+
+    return columns.filter((col) => {
+      const accessorStr = String(col.accessor || '');
+      if (accessorStr.startsWith('precios.')) {
+        const brandName = accessorStr.replace('precios.', '');
+        if (pricesForm.hasOwnProperty('marca3') && brandName === pricesForm.marca3 && !m3Active) return false;
+        if (pricesForm.hasOwnProperty('marca4') && brandName === pricesForm.marca4 && !m4Active) return false;
+        if (pricesForm.hasOwnProperty('marca5') && brandName === pricesForm.marca5 && !m5Active) return false;
+      }
+      return true;
+    });
+  }, [columns, formState]);
+
   return (
     <div className="w-full overflow-hidden rounded-lg border border-[var(--border-primary)] bg-[var(--surface-primary)] shadow-sm">
-      <div className="overflow-x-auto custom-scrollbar table-container" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <div className="overflow-x-auto custom-scrollbar" style={{ maxHeight: 'inherit' }}>
         <table className={`min-w-full divide-y divide-[var(--border-primary)] ${compactClasses} sticky-header ${striped ? 'table-striped' : ''} ${tableClassName}`}>
           {colClasses.length > 0 && (
             <colgroup>
@@ -132,13 +152,13 @@ export const DataTable = <T extends { codigo: string }>({
                   )}
                 </th>
               )}
-              {columns.map((column) => {
+              {filteredColumns.map((column) => {
                 const alignClass = column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left';
                 return (
                   <th
-                    key={`${column.header}-${String(column.accessor)}`}
-                    className={`px-2 py-2 ${alignClass} text-xs font-semibold tracking-wide text-[var(--text-secondary)] uppercase group ${column.sortable ? 'cursor-pointer hover:bg-[var(--bg-tertiary)]/30' : ''} ${column.headerClassName || ''}`}
-                    onClick={column.sortable ? () => column.onSort?.(String(column.accessor)) : undefined}
+                     key={`${column.header}-${String(column.accessor)}`}
+                     className={`px-2 py-2 ${alignClass} text-xs font-semibold tracking-wide text-[var(--text-secondary)] uppercase group ${column.sortable ? 'cursor-pointer hover:bg-[var(--bg-tertiary)]/30' : ''} ${column.headerClassName || ''}`}
+                     onClick={column.sortable ? () => column.onSort?.(String(column.accessor)) : undefined}
                   >
                     <div className={`flex items-center gap-1 ${column.align === 'center' ? 'justify-center' : column.align === 'right' ? 'justify-end' : ''} leading-tight`}>
                       {column.tooltip ? (
@@ -199,7 +219,7 @@ export const DataTable = <T extends { codigo: string }>({
                           </div>
                         </td>
                       )}
-                      {columns.map((column, colIndex) => {
+                      {filteredColumns.map((column, colIndex) => {
                         const alignClass = column.align === 'center' ? 'text-center' : column.align === 'right' ? 'text-right' : 'text-left';
                         return (
                           <td key={`${String(column.accessor)}-${colIndex}`} className={`px-2 py-2.5 break-words text-sm leading-tight text-[var(--text-primary)] ${alignClass} ${column.cellClassName || ''}`}>
@@ -212,7 +232,7 @@ export const DataTable = <T extends { codigo: string }>({
                     </tr>
                     {isExpanded && renderExpansion && (
                       <tr className="bg-[var(--bg-tertiary)]/30 animate-fade-in">
-                        <td colSpan={columns.length + 1} className="px-6 py-3 border-l-4 border-[var(--color-comparador-primary)]">
+                        <td colSpan={filteredColumns.length + 1} className="px-6 py-3 border-l-4 border-[var(--color-comparador-primary)]">
                           {renderExpansion(row)}
                         </td>
                       </tr>
@@ -222,7 +242,7 @@ export const DataTable = <T extends { codigo: string }>({
               })
             ) : (
               <tr>
-                <td colSpan={columns.length + (selectable || expandable ? 1 : 0)} className="py-16">
+                <td colSpan={filteredColumns.length + (selectable || expandable ? 1 : 0)} className="py-16">
                   <div className="flex flex-col items-center justify-center gap-3 text-[var(--text-tertiary)]">
                     <div className="w-12 h-12 rounded-full bg-[var(--bg-tertiary)]/80 flex items-center justify-center ring-1 ring-[var(--border-secondary)]">
                       <Inbox className="w-6 h-6 text-[var(--text-secondary)]" />

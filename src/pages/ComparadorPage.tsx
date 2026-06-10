@@ -243,7 +243,7 @@ return (
 						/>
 						<BulkImportButton />
 						<Tooltip content="Añadir producto manualmente si no se encuentra en la búsqueda" position="top">
-							<button onClick={() => { agregarProductoToLista({ codigo: searchTerm, nombre: searchTerm, cod_ean: '', ean_14: '', peso: 0, stock_referencial: 0, linea: '', keywords: [] }); setSearchTerm(''); }} disabled={!searchTerm || displayedResults.length > 0} className="btn btn-primary text-xs sm:text-sm py-2.5 flex-1 sm:flex-initial" aria-label="Añadir producto manualmente">
+							<button onClick={() => { agregarProductoToLista({ codigo: searchTerm, nombre: searchTerm, ean_14: '', peso: 0, stock_referencial: 0, linea: '', keywords: [] }); setSearchTerm(''); }} disabled={!searchTerm || displayedResults.length > 0} className="btn btn-primary text-xs sm:text-sm py-2.5 flex-1 sm:flex-initial" aria-label="Añadir producto manualmente">
 								Añadir Manualmente
 							</button>
 						</Tooltip>
@@ -278,7 +278,7 @@ return (
 							<h2 className="text-lg font-bold text-[var(--text-primary)] whitespace-nowrap">Tabla de Comparación</h2>
 						</div>
 						<div className="flex flex-wrap gap-3" role="group" aria-label="Acciones de exportación">
-							<ExcelJSExportButton productos={dataConPorcentajes.map(p => { const mp = marginProductos.find(m => m.codigo === p.codigo); return { ...p, precios: p.precios ?? Object.fromEntries(competidores.map(m => [m, null])), costo: mp?.costo ?? null, precioTienda: mp?.precioTienda ?? null, linea: mp?.linea ?? p.linea, prop1Precio: mp?.prop1Precio ?? null, prop2Costo: mp?.prop2Costo ?? null, prop2Precio: mp?.prop2Precio ?? null, }; })} marcas={competidores} cliente={formState.precios.cliente || ''} documento={formState.precios.documento_cliente} codigo_cliente={formState.precios.codigo_cliente} sucursal={formState.precios.sucursal} responsable={userName || ''} disabled={isSubmitting || lista.length === 0} />
+							<ExcelJSExportButton productos={dataConPorcentajes.map(p => { const mp = marginProductos.find(m => m.codigo === p.codigo); return { ...p, precios: p.precios ?? Object.fromEntries(competidores.map(m => [m, null])), costo: mp?.costo ?? null, precioTienda: mp?.precioTienda ?? null, linea: mp?.linea ?? p.linea, prop1Precio: mp?.prop1Precio ?? null, prop2Costo: mp?.prop2Costo ?? null, prop2Precio: mp?.prop2Precio ?? null, prop2CantidadMinima: mp?.prop2CantidadMinima ?? null, }; })} marcas={competidores} cliente={formState.precios.cliente || ''} documento={formState.precios.documento_cliente} codigo_cliente={formState.precios.codigo_cliente} sucursal={formState.precios.sucursal} responsable={userName || ''} disabled={isSubmitting || lista.length === 0} />
 							<Tooltip content="Exportar como página HTML navegable" position="top">
 								<button onClick={handleHTMLExport} disabled={isSubmitting || lista.length === 0} className="btn btn-primary" aria-label={isSubmitting ? "Generando HTML..." : "Exportar como HTML navegable"} aria-busy={isSubmitting}>
 									{isSubmitting ? (
@@ -373,12 +373,6 @@ return (
       />
 
 		<ConfirmModal isOpen={!!confirmState} onConfirm={() => confirmState?.onConfirm()} onCancel={() => setConfirmState(null)} title="Confirmar" message={confirmState?.message || ''} confirmText="Sí, continuar" variant="danger" />
-
-		<footer className="mt-16 pt-10 border-t border-[var(--border-primary)] text-center opacity-80">
-			<p className="text-[11px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.4em]">
-				CIPSA Análisis de Precios - <span className="text-[var(--color-primary-500)]">Powered by G360</span>
-			</p>
-		</footer>
 	</div>
 );
 };

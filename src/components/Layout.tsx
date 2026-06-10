@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/auth';
 import { useAppStore } from '../store/useAppStore';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { Footer } from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -67,20 +68,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <header className="sticky top-0 z-50 w-full glass border-b border-[var(--border-glass)]" role="banner">
           <div className="w-full px-4 h-14 flex items-center justify-between">
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2" aria-label="CIPSA Logo">
-                <div className="p-1 rounded-lg shadow-md transition-transform hover:scale-110" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}>
-                  <img 
-                    src={`${import.meta.env.BASE_URL}favicon.svg`} 
-                    alt="CIPSA Logo" 
-                    className="h-8 w-auto block object-contain" 
-                  />
-                </div>
-                <div className="flex flex-col ml-1">
-                  <span className="text-xl font-black text-[var(--text-primary)] leading-none tracking-tighter">CIPSA</span>
-                  <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.25em] leading-none mt-1 hidden sm:block">Análisis de Precios</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5" aria-label="CIPSA Logo">
+              <img
+                src={`${import.meta.env.BASE_URL}favicon.svg`}
+                alt="CIPSA Logo"
+                className="h-7 w-auto block object-contain"
+              />
+              <span className="text-base font-bold text-[var(--text-primary)] leading-none tracking-tight">CIPSA</span>
             </div>
 
             <div className="relative">
@@ -93,21 +87,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     setShowUserMenu(!showUserMenu);
                   }
                 }}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors min-h-[44px]"
+                className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-[var(--bg-tertiary)] transition-colors"
                 aria-expanded={showUserMenu}
                 aria-haspopup="menu"
                 aria-controls="user-menu"
                 aria-label={`Menú de usuario, ${userName}`}
               >
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-semibold text-[var(--text-primary)] leading-none">{userName}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600))', color: 'var(--color-text-inverse)' }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600))', color: 'var(--color-text-inverse)' }}>
                   {userName?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <svg className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
               </button>
 
               {showUserMenu && (
@@ -120,10 +108,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     aria-labelledby="user-menu-button"
                     ref={userMenuRef}
                   >
-                    <div className="px-3 py-2 border-b border-[var(--border-primary)] bg-[var(--surface-secondary)]">
-                      <p className="text-xs font-medium text-[var(--text-primary)]">Conectado como</p>
-                      <p className="text-sm font-bold text-[var(--text-primary)] truncate">{userName}</p>
-                    </div>
                     <div className="py-1">
                       <button
                         onClick={() => toggleTheme()}
@@ -172,6 +156,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="relative w-full px-3 sm:px-4 lg:px-6 py-4">
         {children}
       </main>
+
+      {isLoggedIn && !isLoginPage && <Footer />}
 
       <ConfirmModal
         isOpen={showLogoutConfirm}

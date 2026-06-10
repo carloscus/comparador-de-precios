@@ -332,18 +332,7 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* ========================================
-              FOOTER
-              ======================================== */}
-          <div className="px-8 py-8 text-center" style={{ 
-            backgroundColor: 'var(--bg-primary)',
-            borderTop: '1px solid var(--border-primary)'
-          }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70" style={{ color: 'var(--text-tertiary)' }}>
-              CIPSA Análisis de Precios <span className="mx-2" style={{ color: 'var(--text-secondary)' }}>|</span> <span style={{ color: 'var(--color-primary-500)' }}>Powered by G360</span>
-            </p>
           </div>
-        </div>
       </div>
     </div>
   );

@@ -21,6 +21,7 @@ interface SlideOverDraft {
   prop1Ranking: number | null;
   prop2Costo: number | null;
   prop2Precio: number | null;
+  prop2CantidadMinima: number | null;
   prop2Margen: number | null;
   prop2Ganancia: number | null;
   prop2DifCosto: number | null;
@@ -28,7 +29,7 @@ interface SlideOverDraft {
   prop2Ranking: number | null;
 }
 
-type CampoDraft = 'costo' | 'precioTienda' | 'prop1Precio' | 'prop2Costo' | 'prop2Precio';
+type CampoDraft = 'costo' | 'precioTienda' | 'prop1Precio' | 'prop2Costo' | 'prop2Precio' | 'prop2CantidadMinima';
 
 const recalcularDraft = (draft: SlideOverDraft): SlideOverDraft => {
   // Use the centralized calculation function
@@ -93,6 +94,7 @@ export function useMarginSlideOver() {
       prop1Ranking: null,
       prop2Costo: existing?.prop2Costo ?? null,
       prop2Precio: existing?.prop2Precio ?? null,
+      prop2CantidadMinima: existing?.prop2CantidadMinima ?? null,
       prop2Margen: null,
       prop2Ganancia: null,
       prop2DifCosto: null,
@@ -156,6 +158,7 @@ export function useMarginSlideOver() {
       draft.prop1Precio,
       draft.prop2Costo,
       draft.prop2Precio,
+      draft.prop2CantidadMinima,
     );
     addToast(
       isExisting

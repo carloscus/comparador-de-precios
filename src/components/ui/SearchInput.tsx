@@ -10,7 +10,7 @@ interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
   loading?: boolean;
 }
 
-export const SearchInput: React.FC<SearchInputProps> = ({
+export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(({
   onClear,
   module,
   size = 'md',
@@ -19,7 +19,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   className = '',
   value,
   ...props
-}) => {
+}, ref) => {
   const moduleClass = module ? `input-module module-${module}` : '';
   const sizeClass = size !== 'md' ? `input-${size}` : '';
 
@@ -40,6 +40,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       </div>
 
       <input
+        ref={ref}
         type="search"
         className={classes}
         data-module={module}
@@ -65,6 +66,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       )}
     </div>
   );
-};
+});
+SearchInput.displayName = 'SearchInput';
 
 export default SearchInput;

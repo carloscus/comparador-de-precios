@@ -10,7 +10,7 @@ interface CompetidorPrecio {
   difPct: number | null;
 }
 
-type CampoDraft = 'costo' | 'precioTienda' | 'prop1Precio' | 'prop2Costo' | 'prop2Precio';
+type CampoDraft = 'costo' | 'precioTienda' | 'prop1Precio' | 'prop2Costo' | 'prop2Precio' | 'prop2CantidadMinima';
 
 interface MarginSlideOverProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ interface MarginSlideOverProps {
     prop1Ranking: number | null;
     prop2Costo: number | null;
     prop2Precio: number | null;
+    prop2CantidadMinima: number | null;
     prop2Margen: number | null;
     prop2Ganancia: number | null;
     prop2DifCosto: number | null;
@@ -70,6 +71,18 @@ export const MarginSlideOver: React.FC<MarginSlideOverProps> = ({
   onConfirmAdd,
 }) => {
   if (!isOpen || !draft) return null;
+
+  const simulation = {
+    p2: {
+      cantidadMinima: draft.prop2CantidadMinima !== null && draft.prop2CantidadMinima !== undefined ? draft.prop2CantidadMinima : ''
+    }
+  };
+  const sku = {
+    codigo: draft.codigo
+  };
+  const updateP2Cantidad = (codigo: string, value: number) => {
+    onUpdateCampo('prop2CantidadMinima', value || null);
+  };
 
   const competenciaEntries: CompetidorPrecio[] = Object.entries(draft.preciosCompetencia).map(
     ([brand, price]) => {
@@ -225,7 +238,7 @@ export const MarginSlideOver: React.FC<MarginSlideOverProps> = ({
                   type="costo"
                   showCurrency
                   size="md"
-                  className="w-full"
+                  className="w-full input-whatif-editable"
                 />
               </div>
               <div className="space-y-1.5">
@@ -239,7 +252,7 @@ export const MarginSlideOver: React.FC<MarginSlideOverProps> = ({
                   type="precio"
                   showCurrency
                   size="md"
-                  className="w-full"
+                  className="w-full input-whatif-editable"
                 />
               </div>
             </div>
@@ -372,6 +385,22 @@ export const MarginSlideOver: React.FC<MarginSlideOverProps> = ({
                     size="md"
                     className="w-full"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[var(--color-on-surface-secondary)]">
+                    <Package className="w-3.5 h-3.5" />
+                    <span>Cantidad Mínima</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    className="input-whatif-editable w-full p-2 rounded text-right font-mono font-semibold text-sm bg-[var(--surface-elevated)] border border-[var(--border-primary)] text-[var(--text-primary)]"
+                    placeholder="Ej. 100"
+                    value={simulation.p2.cantidadMinima}
+                    onChange={(e) => updateP2Cantidad(sku.codigo, Number(e.target.value))}
+                  />
+                  <span className="text-xs text-slate-400 mt-1 block">
+                    Cantidad Mínima de Compra (Compromiso del Mayorista)
+                  </span>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">

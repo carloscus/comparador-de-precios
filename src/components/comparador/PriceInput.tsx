@@ -71,7 +71,7 @@ export const PriceInput: React.FC<PriceInputProps> = ({
     setIsFocused(true);
   };
 
-  const consistentClass = 'rounded-md border bg-[var(--surface-elevated)] h-6 flex items-center px-1 text-xs font-mono text-right price-cell-45 transition-all duration-200';
+  const consistentClass = 'input-whatif-editable rounded-md border bg-[var(--surface-elevated)] h-6 flex items-center px-1 text-xs font-mono text-right price-cell-45 transition-all duration-200';
 
   return (
     <div className="relative price-input-wrapper group">
